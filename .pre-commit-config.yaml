@@ -31,3 +31,8 @@ repos:
         entry: deadnix
         language: system
         files: \.nix$
+      - id: skills-check
+        name: skills check (lock up to date)
+        entry: npx --yes skills@latest check -p -y
+        language: system
+        pass_filenames: false
