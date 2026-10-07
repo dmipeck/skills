@@ -1,0 +1,10 @@
+---
+description: MR/PR conventional-commit titles. Use when creating/editing MR/PR
+alwaysApply: true
+---
+
+Every merge request and pull request title must use conventional-commits format
+Apply when creating or updating an MR/PR. Never ship a free-form, sentence-case
+or ticket-only title (`Fix bug`, `Update docs`, `ABC-123`). This prevents any
+squash and merge/rebase flows from landing an invalid commit title.
+
