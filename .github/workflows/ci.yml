@@ -16,11 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Run conventional-pre-commit
         run: |
           git log -1 --pretty=%B > /tmp/commit-msg
-          nix develop --command pre-commit run conventional-pre-commit \
-            --hook-stage commit-msg --commit-msg-filename /tmp/commit-msg
+          for i in 1 2 3; do
+            nix develop --command pre-commit run conventional-pre-commit \
+              --hook-stage commit-msg --commit-msg-filename /tmp/commit-msg \
+              && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
 
   gitleaks:
     name: gitleaks
@@ -28,10 +35,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Run gitleaks
         run: |
           git add -A
-          nix develop --command pre-commit run gitleaks --all-files
+          for i in 1 2 3; do
+            nix develop --command pre-commit run gitleaks --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
 
   nixfmt:
     name: nixfmt
@@ -39,8 +52,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Run nixfmt
-        run: nix develop --command pre-commit run nixfmt --all-files
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run nixfmt --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
 
   editorconfig-checker:
     name: editorconfig-checker
@@ -48,8 +68,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Run editorconfig-checker
-        run: nix develop --command pre-commit run editorconfig-checker --all-files
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run editorconfig-checker --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
 
   statix:
     name: statix
@@ -57,8 +84,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Run statix
-        run: nix develop --command pre-commit run statix --all-files
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run statix --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
 
   deadnix:
     name: deadnix
@@ -66,5 +100,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Run deadnix
-        run: nix develop --command pre-commit run deadnix --all-files
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run deadnix --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
