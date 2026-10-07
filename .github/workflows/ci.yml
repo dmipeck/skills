@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conventional-commits:
+    name: conventional-commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Run conventional-pre-commit
+        run: |
+          git log -1 --pretty=%B > /tmp/commit-msg
+          nix develop --command pre-commit run conventional-pre-commit \
+            --hook-stage commit-msg --commit-msg-filename /tmp/commit-msg
+
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Run gitleaks
+        run: |
+          git add -A
+          nix develop --command pre-commit run gitleaks --all-files
+
+  nixfmt:
+    name: nixfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Run nixfmt
+        run: nix develop --command pre-commit run nixfmt --all-files
+
+  editorconfig-checker:
+    name: editorconfig-checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Run editorconfig-checker
+        run: nix develop --command pre-commit run editorconfig-checker --all-files
+
+  statix:
+    name: statix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Run statix
+        run: nix develop --command pre-commit run statix --all-files
+
+  deadnix:
+    name: deadnix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Run deadnix
+        run: nix develop --command pre-commit run deadnix --all-files

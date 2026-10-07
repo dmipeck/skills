@@ -1,0 +1,33 @@
+repos:
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: gitleaks (secrets)
+        entry: gitleaks protect --staged
+        language: system
+        pass_filenames: false
+      - id: nixfmt
+        name: nixfmt (nix formatting)
+        entry: nixfmt
+        language: system
+        files: \.nix$
+      - id: editorconfig-checker
+        name: editorconfig-checker
+        entry: editorconfig-checker
+        language: system
+      - id: statix
+        name: statix (nix lint)
+        entry: statix check
+        language: system
+        pass_filenames: false
+      - id: deadnix
+        name: deadnix (unused nix)
+        entry: deadnix
+        language: system
+        files: \.nix$
