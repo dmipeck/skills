@@ -109,3 +109,19 @@ jobs:
             sleep $((i * 5))
           done
           exit 1
+
+  skills-check:
+    name: skills-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Run skills-check
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run skills-check --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1

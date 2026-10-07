@@ -17,8 +17,12 @@ changes. Secrets and per-host URLs stay in home-manager as process environment
 
 ## Third-party skills
 
+Install **only** with `npx skills` (do not hand-copy). Keep each skill under a
+namespaced owner directory:
+
 ```bash
 npx skills add <owner/repo> -g -a cursor --copy
 ```
 
-Commit the resulting trees under `skills/`.
+Commit as `skills/<owner>/<skill-id>/` (e.g. `skills/mattpocock/grilling/SKILL.md`).
+First-party skills live at `skills/dmipeck/<id>/`.

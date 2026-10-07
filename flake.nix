@@ -28,6 +28,8 @@
             statix
             deadnix
             nixd
+            # skills-lock (npx skills check)
+            nodejs
           ];
         in
         {
