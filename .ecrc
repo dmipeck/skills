@@ -1,0 +1,7 @@
+{
+  "Exclude": [
+    "^skills/",
+    "^agents/",
+    "^rules/"
+  ]
+}
