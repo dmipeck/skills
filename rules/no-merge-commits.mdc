@@ -1,0 +1,9 @@
+---
+description: MR/PR FF or rebase only. Use when merging MR/PR changes
+alwaysApply: true
+---
+
+Never create a merge commit while working with git. Never allow a merge
+commit via MR/PR merge (no merge queues that produce merge commits). Always
+fast-forward or rebase. If a merge commit appears by accident, rebase to
+remove it from history.

@@ -10,3 +10,10 @@ trim_trailing_whitespace = true
 
 [*.nix]
 indent_size = 2
+
+# Authoring Format trees often use markdown list/code indent that is not a
+# multiple of indent_size; do not enforce padding on those files.
+[*.{md,mdc}]
+indent_size = unset
+[{skills,agents,rules}/**]
+indent_size = unset
