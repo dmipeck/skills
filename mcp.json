@@ -84,15 +84,6 @@
         "Authorization": "Bearer ${env:CLOUDFLARE_API_TOKEN}"
       }
     },
-    "plane": {
-      "type": "stdio",
-      "command": "plane-mcp",
-      "args": [],
-      "env": {
-        "PLANE_BASE_URL": "${env:PLANE_BASE_URL}",
-        "PLANE_API_KEY": "${env:PLANE_API_KEY}"
-      }
-    },
     "firebase": {
       "type": "stdio",
       "command": "firebase",
