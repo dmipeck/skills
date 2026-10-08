@@ -57,7 +57,7 @@ Repeat until no open tickets remain:
    Each must:
    - Follow `/implement`
    - Work in a new git worktree
-     (`git-workflow`: `.agent/worktrees/<ticket-slug>`)
+     (`git-workflow`: `.agents/worktrees/<ticket-slug>`)
    - Base the ticket branch on the **composite** branch (not default)
    - Push and open an MR/PR **targeting the composite branch**
      (GitLab → `glab`; GitHub → `gh`;

@@ -17,7 +17,7 @@ prompted work, open a PR, and do not finish until CI is green.
 1. Resolve the repo default branch (`main` / `master` / remote HEAD).
 2. Fast-forward pull that branch — no stale base.
 3. Create a **new** worktree + branch for this task
-   (`.agent/worktrees/<change-name>`; keep `.agent/worktrees/` in
+   (`.agents/worktrees/<change-name>`; keep `.agents/worktrees/` in
    `.git/info/exclude`). Do not edit on the default-branch checkout.
 4. If already inside the worktree + branch for **this** task, continue;
    do not recreate.
