@@ -1,15 +1,13 @@
 ---
 name: babysit-pr
 description: >-
-  Babysit a PR until it is mergeable: rebase onto the default branch, wait
-  for CI via wait-for-ci, fix conflicts and CI failures, then report.
-disable-model-invocation: true
+  Babysit a PR until it is mergeable
 argument-hint: "[pr-number|url|branch]"
 ---
 
 # Babysit PR
 
-Slash-only: keep an open PR/MR mergeable. Rebase onto latest default, clear
+Keep an open PR/MR mergeable. Rebase onto latest default, clear
 conflicts and CI failures, then report. Do **not** merge unless asked.
 
 ## 1. Resolve target
