@@ -1,8 +1,8 @@
 ---
 name: git-workflow
 description: >-
-    Git workflow and commit structure rules. Use before banching, commiting, or
-    pushing
+  Git workflow and commit structure rules. Use before branching, committing,
+  or pushing.
 ---
 
 # Git Workflow

@@ -1,6 +1,6 @@
 ---
 name: golang-api
-description: OpenAPI-driven codegen: ogen server/client, OIDC, thin handler.
+description: OpenAPI-driven Go API codegen.
 ---
 
 # API creation with ogen / OpenAPI

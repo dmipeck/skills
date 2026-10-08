@@ -1,11 +1,8 @@
 ---
 name: wait-for-ci
 description: >-
-  Wait for CI by polling individual jobs, not the pipeline as a whole. Fail
-  fast on any hard job failure; when all jobs finish clean, sanity-check
-  pipeline status before reporting OK. Use when waiting for CI, GitHub
-  Actions, GitLab pipelines, check runs, or after push/PR when the agent must
-  know whether CI passed.
+  Wait for CI to reach a definitive result. Use when waiting on GitHub
+  Actions, GitLab pipelines, or check runs.
 ---
 
 # Wait for CI

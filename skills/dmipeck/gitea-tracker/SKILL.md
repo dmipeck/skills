@@ -1,8 +1,8 @@
 ---
 name: gitea-tracker
 description: >-
-  Use when Gitea is selected as issue tracker during
-  setup-matt-pocock-skills
+  Route issue-tracker operations to Gitea. Use when Gitea is selected as the
+  tracker during setup-matt-pocock-skills.
 disable-model-invocation: true
 ---
 

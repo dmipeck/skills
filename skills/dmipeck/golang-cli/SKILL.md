@@ -1,6 +1,6 @@
 ---
 name: golang-cli
-description: Golang CLI. EnvPrefix-only env binding, RunE config load.
+description: Golang CLI conventions.
 ---
 
 # CLI with cobra + viper

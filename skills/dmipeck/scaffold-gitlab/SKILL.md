@@ -1,10 +1,8 @@
 ---
 name: scaffold-gitlab
 description: >-
-  Configure a new GitLab project with a minimal feature set and
-  fast-forward merge defaults. Use when creating a GitLab repo/project,
-  `glab repo create`, scaffolding a GitLab remote, or setting up GitLab
-  project features / merge request settings for a fresh project.
+  Configure a new GitLab project with minimal features and fast-forward
+  merges.
 ---
 
 Configure a **new** GitLab project after creation (or while creating it). Prefer

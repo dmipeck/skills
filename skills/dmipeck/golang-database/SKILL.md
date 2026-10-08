@@ -1,8 +1,6 @@
 ---
 name: golang-database
-description: Use when working on database queries or migrations in a golang app.
-  Defines the sql-first codegen workflow and database package layout, deferring
-  tool specifics to golang-query (sqlc) and golang-migration (golang-migrate).
+description: Database queries and migrations in a Go app.
 ---
 
 # Database access in Go

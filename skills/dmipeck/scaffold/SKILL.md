@@ -1,8 +1,7 @@
 ---
 name: scaffold
 description: >-
-  Scaffold a new project with flake-parts, a Nix
-  devShell of formatters/linters/LSPs, and pre-commit wired to them.
+  Scaffold a new project with flake-parts, a Nix devShell, and pre-commit.
 disable-model-invocation: true
 ---
 
