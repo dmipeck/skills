@@ -19,7 +19,7 @@ conflicts and CI failures, then report. Do **not** merge unless asked.
    vs ready.
 
 Work in a checkout of the **source** branch (existing worktree under
-`.agent/worktrees/` if present; otherwise create/use one — never edit on the
+`.agents/worktrees/` if present; otherwise create/use one — never edit on the
 default-branch checkout).
 
 ## 2. Rebase onto default

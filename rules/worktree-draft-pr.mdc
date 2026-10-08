@@ -8,9 +8,9 @@ alwaysApply: true
 Unless the user says otherwise, **before any code changes**:
 
 1. Fast-forward pull the repo's default branch (`main` / `master`).
-2. Create a new branch and worktree under `.agent/worktrees/<change-name>`
-   (`git worktree add .agent/worktrees/<change-name> -b <branch>`).
-   Ensure `.agent/worktrees/` is in `.git/info/exclude`. Do not edit on
+2. Create a new branch and worktree under `.agents/worktrees/<change-name>`
+   (`git worktree add .agents/worktrees/<change-name> -b <branch>`).
+   Ensure `.agents/worktrees/` is in `.git/info/exclude`. Do not edit on
    the default-branch checkout.
 3. Open a **draft** PR/MR as soon as the first commit is pushable.
 4. Work only inside that worktree; commit and push discrete changes.
