@@ -35,15 +35,11 @@ feat/fix/breaking.
 Do **not** infer whether deploy/gitops/ops config has external consumers —
 that is not reliable from the repo alone. When a change touches those
 surfaces and feat/fix/breaking vs maintainer work depends on that
-distinction:
-
-1. Read `AGENTS.md` for a recorded answer under
-   `Commit users (conventional commits)`.
-2. If missing or unclear, ask the user whether anyone outside this repo
-   consumes that surface.
-3. Add their answer to `AGENTS.md` using the template in
-   `agents-user-surface.md` (this skill directory), then classify the
-   commit.
+distinction: if `AGENTS.md` has no clear answer under
+`Commit users (conventional commits)`, ask the user whether anyone
+outside this repo consumes that surface, add their answer to `AGENTS.md`
+using the template in `agents-user-surface.md` (this skill directory),
+then classify the commit.
 
 ## Types
 
