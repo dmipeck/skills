@@ -29,12 +29,21 @@ types never wrong at runtime are not feat/fix/breaking — pick another type.
 
 The user is whoever consumes the change after it ships: end users of the
 product, API/CLI callers, or developers depending on a library this repo
-publishes. Operators count only when they consume an operational surface
-outside this repo (shared deploy contracts, Helm charts, Terraform modules
-others apply). A web app that owns its own gitops/deploy config has no
-operator-user for those files — rewriting them is maintainer work, not
-breaking. If only maintainers of this codebase feel the change, it is not
+publishes. If only maintainers of this codebase feel the change, it is not
 feat/fix/breaking.
+
+Do **not** infer whether deploy/gitops/ops config has external consumers —
+that is not reliable from the repo alone. When a change touches those
+surfaces and feat/fix/breaking vs maintainer work depends on that
+distinction:
+
+1. Read `AGENTS.md` for a recorded answer under
+   `Commit users (conventional commits)`.
+2. If missing or unclear, ask the user whether anyone outside this repo
+   consumes that surface.
+3. Add their answer to `AGENTS.md` using the template in
+   `agents-user-surface.md` (this skill directory), then classify the
+   commit.
 
 ## Types
 
