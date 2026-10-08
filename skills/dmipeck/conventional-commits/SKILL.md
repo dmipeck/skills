@@ -28,9 +28,13 @@ types never wrong at runtime are not feat/fix/breaking — pick another type.
 ### Who is the user?
 
 The user is whoever consumes the change after it ships: end users of the
-product, API/CLI callers, operators of the service, or developers depending
-on a library this repo publishes. If only maintainers of this codebase feel
-the change, it is not feat/fix/breaking.
+product, API/CLI callers, or developers depending on a library this repo
+publishes. Operators count only when they consume an operational surface
+outside this repo (shared deploy contracts, Helm charts, Terraform modules
+others apply). A web app that owns its own gitops/deploy config has no
+operator-user for those files — rewriting them is maintainer work, not
+breaking. If only maintainers of this codebase feel the change, it is not
+feat/fix/breaking.
 
 ## Types
 
