@@ -1,9 +1,7 @@
 ---
 name: comments
 description: >-
-  Calm down with comments. Use when adding comments, "comment this code",
-  "comment this function", explaining code in comments, or reviewing diff
-  full of what-comments
+  Use when writing code or documentation
 ---
 # Comments
 
@@ -43,24 +41,3 @@ Those = API. Reader call from outside, cannot see body. Tell them what,
 
 Private function, private field, internal var, inline statement → no
   what-comment. Only why-comment if unusual.
-
-## Test
-
-Before comment, ask: "Reader need this?" If answer "see code dumb" → delete
-  comment. If "without this, reader confused why" → keep, write why.
-
-Comment that survive:
-- **why** for unusual choice (workaround, perf trick, order matter, historical
-  reason, constraint)
-- doc comment on public surface
-
-Comment that die:
-- what code do
-- "we do X" restating next line
-- obvious "increment", "loop over items", "set value"
-- "TODO fix" without reason (ok only: TODO + why)
-
-## Reminder
-
-Code clear? No comment needed. Good code need zero inline comment. Clean code
-  with one why-comment beat dirty code with ten what-comments.

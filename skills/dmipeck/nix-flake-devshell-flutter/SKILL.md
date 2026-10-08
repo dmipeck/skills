@@ -1,18 +1,7 @@
 ---
 name: nix-flake-devshell-flutter
 description: >-
-  Build or fix a Nix flake-parts devShell for a Flutter/Android app — pinning
-  nixpkgs' flutterPackages to a specific version, composing an androidenv
-  Android SDK, wiring a writable Flutter SDK overlay when includeBuild +
-  Gradle needs it, JAVA_HOME/ANDROID_SDK_ROOT/PUB_CACHE, and proving the
-  result with a real headless-emulator build-and-run. Use when the user says
-  "flutter devshell", "nix flake for flutter", "flutter android nix",
-  "flake-parts flutter", "flutter nix shell", "nix develop flutter build fails",
-  "Gradle projectDir not writable", or asks to reproduce/pin a Flutter+Android
-  toolchain with Nix so `flutter build apk` and `flutter test` work inside
-  `nix develop`. Also use when troubleshooting devShell-surfaced
-  Gradle/AGP/Kotlin/NDK/SDK-component errors that show up only when building a
-  Flutter app from inside a Nix shell.
+  Build or fix a nix flake devShell for a Flutter/Android app
 ---
 
 # Flutter + Android Nix devShell (flake-parts)
