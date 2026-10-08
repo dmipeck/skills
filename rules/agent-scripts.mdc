@@ -1,0 +1,39 @@
+---
+description: Write throwaway scripts under .agents/scripts/; no inline -c/heredoc programs
+alwaysApply: true
+---
+
+# Agent throwaway scripts
+
+One-time / throwaway programs go in `.agents/scripts/`, not inline in the
+shell.
+
+## Do
+
+1. Ensure `.agents/scripts/` is in `.git/info/exclude` before writing there.
+2. Write `.agents/scripts/<short-purpose>.<ext>` (kebab-case; real extension).
+3. Run that file (`bash …`, `python …`, etc.).
+4. Do not commit these files unless the user asks to promote one.
+
+## Do not
+
+- Pass a non-trivial program body via shell `-c` / `-e` (or language
+  equivalents) or via a heredoc fed to an interpreter
+  (`bash <<'EOF'`, `python - <<'PY'`, …).
+
+## Allowed
+
+- Trivial one-liner shell commands that are not a program body.
+- Heredocs that only feed **stdin to a tool** (e.g. `git commit -m "$(cat <<'EOF' …)"`).
+
+```bash
+# ❌ BAD
+python -c 'import json,sys; …many lines…'
+bash <<'EOF'
+# multi-line throwaway
+EOF
+
+# ✅ GOOD
+# .agents/scripts/parse-ci-json.py
+python .agents/scripts/parse-ci-json.py
+```
