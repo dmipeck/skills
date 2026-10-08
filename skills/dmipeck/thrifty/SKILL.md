@@ -1,8 +1,8 @@
 ---
 name: thrifty
 description: >-
-  Keeps token use down. Use when `/thrifty`, delegating to subagent, or needs
-  to perform mechanical job
+  Keeps token use down. Use for /thrifty, subagent delegation, or mechanical
+  work.
 ---
 # Thrifty
 

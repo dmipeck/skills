@@ -1,9 +1,6 @@
 ---
 name: golang-query
-description: >-
-  Use when working on sqlc queries in a golang app. Defines the sqlc codegen
-  workflow: sqlc.yaml, native-type overrides over pgtype, query files, and
-  regeneration via internal/tools/generate.go.
+description: sqlc queries in a Go app.
 ---
 # sqlc query codegen
 

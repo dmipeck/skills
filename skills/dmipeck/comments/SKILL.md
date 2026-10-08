@@ -1,7 +1,8 @@
 ---
 name: comments
 description: >-
-  Use when writing code or documentation
+  Write comments that say why, not what. Use when writing code or
+  documentation.
 ---
 # Comments
 

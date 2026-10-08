@@ -1,9 +1,7 @@
 ---
 name: orchestrate
 description: >-
-  Complete a /to-tickets task graph with parallel /implement on the unblocked
-  frontier, serial MR/PR merges into one composite branch/PR, and a human
-  review gate before that composite lands on the default branch.
+  Orchestrate a /to-tickets task graph to one reviewed PR.
 disable-model-invocation: true
 argument-hint: <ticket-set-or-parent-issue>
 ---
