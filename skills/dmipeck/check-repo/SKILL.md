@@ -1,16 +1,7 @@
 ---
 name: check-repo
 description: >-
-  Check an unfamiliar repo into a verified green state in one pass: survey
-  the checkout, ensure a flake devshell (creating one when missing), install
-  dependencies inside the devshell, verify the build, run the full test suite
-  to green, and smoke-test the app. Use when the user says "check this repo",
-  "check-repo", "is this repo healthy", "get this building", "verify this
-  project", "does this build even work", "make this build on my machine", or
-  hands you a third-party checkout to verify before you rely on it. Old
-  adopt-family phrases ("adopt this repo", "onboard a new project") still
-  route here — adopting is just what you call it once every gate is green —
-  even when they never say Nix or devshell.
+  Check an unfamiliar repo into a verified green state. Use when the user says asks you to check, setup or adopt a repo
 ---
 
 # Check Repo
