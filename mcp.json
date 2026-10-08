@@ -97,6 +97,14 @@
       "type": "stdio",
       "command": "firebase",
       "args": ["mcp"]
+    },
+    "entra": {
+      "url": "https://mcp.svc.cloud.microsoft/enterprise",
+      "auth": {
+        "CLIENT_ID": "${env:ENTRA_MCP_CLIENT_ID}",
+        "CLIENT_SECRET": "${env:ENTRA_MCP_CLIENT_SECRET}",
+        "scopes": ["api://e8c77dc2-69b3-43f4-bc51-3213c9d915b4/.default"]
+      }
     }
   }
 }
