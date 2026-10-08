@@ -1,6 +1,6 @@
 ---
 name: golang-testing
-description: Tests in golang: testify, testcontainers, integration build tag.
+description: Go testing conventions.
 ---
 
 # Testing in Go

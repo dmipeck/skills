@@ -1,10 +1,8 @@
 ---
 name: golang-layout
 description: >-
-  Golang module/app layout per go.dev: project shapes, internal/,
-  cmd/<name>/, generate.go. Use when scaffolding or reviewing a Go repo
-  tree, choosing where packages and binaries live, or deciding root vs
-  internal/ vs cmd/.
+  Go module and app layout per go.dev. Use when scaffolding or reviewing a Go
+  repo tree.
 ---
 
 # Go Project Layout

@@ -1,14 +1,8 @@
 ---
 name: dotagents-files
 description: >-
-  Use when creating or editing Cursor Authoring Format files under
-  `dotagents/`: flat agents (`agents/<id>.md`), Cursor-pure skills
-  (`skills/<id>/SKILL.md`), `.mdc` rules, or Cursor-shaped `mcp.json`.
-  Triggers: "add a subagent", "author an agent.md", "write a skill under
-  dotagents/skills", "add a rule .mdc", "edit mcp.json", "Authoring Format",
-  "metadata.opencode", "Common Model". NOT for: repo-root AGENTS.md content
-  quality — use writing-for-agents; Claude/plugin-only agent tooling — use
-  agent-development; DotAgents protocol / OpenCode dialect as on-disk SoT.
+  Author Cursor Authoring Format files — agents, Cursor-pure skills, rules,
+  and `mcp.json`. Use when adding or editing one of these artifacts.
 ---
 
 # DotAgents Files (Cursor Authoring Format)

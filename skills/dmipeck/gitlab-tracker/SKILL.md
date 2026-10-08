@@ -1,8 +1,8 @@
 ---
 name: gitlab-tracker
 description: >-
-  Use when GitLab is selected as issue tracker during
-  setup-matt-pocock-skills
+  Route issue-tracker operations to GitLab. Use when GitLab is selected as the
+  tracker during setup-matt-pocock-skills.
 disable-model-invocation: true
 ---
 

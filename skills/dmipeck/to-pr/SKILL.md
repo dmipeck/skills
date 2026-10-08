@@ -1,10 +1,8 @@
 ---
 name: to-pr
 description: >-
-  Turn a prompted task into a PR: fresh default-branch base in a new
-  worktree, do the work, open the PR, then wait for CI green via
-  wait-for-ci (fix failures before finishing). Use when the user invokes
-  /to-pr or asks to complete work as a PR with a CI gate.
+  Turn a prompted task into a PR that is done only when CI is green. Use when
+  the user invokes /to-pr.
 disable-model-invocation: true
 argument-hint: <task>
 ---

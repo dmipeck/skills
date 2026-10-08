@@ -1,7 +1,8 @@
 ---
 name: check-repo
 description: >-
-  Check an unfamiliar repo into a verified green state. Use when the user says asks you to check, setup or adopt a repo
+  Check an unfamiliar repo into a verified green state. Use when asked to
+  check, set up, or adopt a repo.
 ---
 
 # Check Repo

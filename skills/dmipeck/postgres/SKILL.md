@@ -1,10 +1,8 @@
 ---
 name: postgres
 description: >-
-  Use when working on a postgres schema in any app. Defines schema
-  conventions: NOT NULL by default, uuidv7 pk keys, created_at/updated_at,
-  soft delete, _del_ prefix, ix_/ux_/fk_ prefixes, CHECK constraints,
-  and timestamps without timezone.
+  Postgres schema conventions. Use when working on a Postgres schema in any
+  app.
 ---
 
 # PostgreSQL Schema Conventions

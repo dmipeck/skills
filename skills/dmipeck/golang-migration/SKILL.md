@@ -1,6 +1,6 @@
 ---
 name: golang-migration
-description: golang-migrate: go:embed, rename-over-drop, round-trip test.
+description: Database migrations with golang-migrate.
 ---
 
 # Migrations with golang-migrate
