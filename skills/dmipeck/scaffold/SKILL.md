@@ -34,10 +34,11 @@ Before scaffolding, determine what the project actually is:
    the detected language set and the tool list before writing files, but
    proceed with sensible defaults if the user has no preference.
 
-"Relevant tools" below always means the base Nix tooling (pre-commit,
-gitleaks, nixfmt, editorconfig-checker) plus every formatter, linter and LSP
-listed for the detected code languages in the table — never for docs or
-plain text.
+"Relevant tools" below always means the **default checks** — gitleaks,
+editorconfig-checker, yamllint, nixfmt, statix, deadnix — plus `pre-commit`
+itself and every formatter, linter and LSP listed for the detected code
+languages in the table. The default checks apply to every scaffolded project,
+whatever the language; docs and plain text never add tools.
 
 ## Tool table (2026 community defaults)
 
@@ -59,16 +60,21 @@ plain-text/documentation languages, which stay unlinted (do not add a row).
 ## What to create
 
 1. `flake.nix` — flake-parts based. A `devShells.default` that installs
-  pre-commit, gitleaks, nixfmt, editorconfig-checker, plus every
-  language-relevant formatter, linter and LSP from the tool table. The shell
-  hook installs the pre-commit git hooks.
+   pre-commit plus every default check (gitleaks, editorconfig-checker,
+   yamllint, nixfmt, statix, deadnix) and every language-relevant formatter,
+   linter and LSP from the tool table. The shell hook installs the pre-commit
+   git hooks.
 2. `.pre-commit-config.yaml` — a `conventional-commits` hook plus one hook
-  per formatter/linter, using the binaries from the devShell
-  (`language: system`). LSPs are never hooked.
+   per default check and per language formatter/linter, using the binaries
+   from the devShell (`language: system`). LSPs are never hooked.
 3. `.editorconfig` — minimal base that editorconfig-checker can validate
-  against.
-4. `.gitignore` — sane defaults (`result`, `.direnv`). Lock files must be
-  committed, never ignored.
+   against.
+4. `.yamllint.yaml` — yamllint config so generated YAML passes the yamllint
+   default check.
+5. `.gitignore` — sane defaults (`result`, `.direnv`). Lock files must be
+   committed, never ignored.
+6. `.github/workflows/ci.yml` — one CI job per default check (gitleaks,
+   editorconfig-checker, yamllint, nixfmt, statix, deadnix).
 
 ## flake.nix
 
@@ -86,20 +92,29 @@ portable.
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs@{ self, flake-parts, ... }:
+  outputs =
+    inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin"
-      "aarch64-darwin" ];
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
 
-      perSystem = { pkgs, ... }:
+      perSystem =
+        { pkgs, ... }:
         let
-          # Base Nix tooling always; uncomment the row(s) for each detected
+          # Default checks always; uncomment the row(s) for each detected
           # language (formatter, linter, LSP).
           tools = with pkgs; [
             pre-commit
             gitleaks
-            nixfmt
             editorconfig-checker
+            yamllint
+            nixfmt
+            statix
+            deadnix
             # Go: golangci-lint gopls gotools
             # Rust: clippy rust-analyzer rustfmt
             # Python: pyright ruff
@@ -144,15 +159,30 @@ repos:
         entry: gitleaks protect --staged
         language: system
         pass_filenames: false
+      - id: editorconfig-checker
+        name: editorconfig-checker
+        entry: editorconfig-checker
+        language: system
+      - id: yamllint
+        name: yamllint (yaml lint)
+        entry: yamllint
+        language: system
+        files: \.(yaml|yml)$
       - id: nixfmt
         name: nixfmt (nix formatting)
         entry: nixfmt
         language: system
         files: \.nix$
-      - id: editorconfig-checker
-        name: editorconfig-checker
-        entry: editorconfig-checker
+      - id: statix
+        name: statix (nix lint)
+        entry: statix check
         language: system
+        pass_filenames: false
+      - id: deadnix
+        name: deadnix (unused nix)
+        entry: deadnix --fail
+        language: system
+        files: \.nix$
 ```
 
 For every detected code language (never plain-text/docs), append its
@@ -160,6 +190,11 @@ formatters and linters as local `language: system` hooks (entry = the
 devShell binary, `files:` regex matching the language's extensions) and add
 the tools to the devShell too. LSPs are never hooked — they are editor-side
 and reach the editor through the devShell `PATH`.
+
+`deadnix` runs as `deadnix --fail`: without `--fail` it reports unused code
+but exits 0, so the hook never gates. For the same reason the `flake.nix`
+template binds only the inputs it uses — an unused `self` in `inputs@{ ... }`
+would fail the deadnix check.
 
 ## .editorconfig
 
@@ -178,6 +213,23 @@ trim_trailing_whitespace = true
 indent_size = 2
 ```
 
+## .yamllint.yaml
+
+yamllint's stock rules reject lines over 80 columns and flag the `on:` key in
+GitHub Actions workflows. This config keeps yamllint useful while letting the
+generated YAML pass the default check.
+
+```yaml
+extends: default
+
+rules:
+  document-start: disable
+  line-length:
+    max: 100
+  truthy:
+    check-keys: false
+```
+
 ## .gitignore
 
 ```gitignore
@@ -185,6 +237,124 @@ result
 result-*
 .direnv
 .envrc
+```
+
+## .github/workflows/ci.yml
+
+One job per default check, so a failure names the check that broke. Each job
+runs the same hook as pre-commit through `nix develop`, so CI and local agree.
+`gitleaks` stages the checkout first because its hook scans the staged set
+(`pass_filenames: false`).
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Run gitleaks
+        run: |
+          git add -A
+          for i in 1 2 3; do
+            nix develop --command pre-commit run gitleaks --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
+
+  editorconfig-checker:
+    name: editorconfig-checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Run editorconfig-checker
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run editorconfig-checker --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
+
+  yamllint:
+    name: yamllint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Run yamllint
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run yamllint --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
+
+  nixfmt:
+    name: nixfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Run nixfmt
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run nixfmt --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
+
+  statix:
+    name: statix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Run statix
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run statix --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
+
+  deadnix:
+    name: deadnix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Run deadnix
+        run: |
+          for i in 1 2 3; do
+            nix develop --command pre-commit run deadnix --all-files && exit 0
+            echo "attempt $i failed; retrying..."
+            sleep $((i * 5))
+          done
+          exit 1
 ```
 
 ## Verify
@@ -220,7 +390,7 @@ automatically, with module internals living under a `./nix` directory.
   of the module tree:
 
   ```nix
-  outputs = inputs@{ self, flake-parts, ... }:
+  outputs = inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin"
       "aarch64-darwin" ];
