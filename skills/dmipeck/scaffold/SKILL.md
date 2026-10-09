@@ -93,7 +93,7 @@ portable.
   };
 
   outputs =
-    inputs@{ self, flake-parts, ... }:
+    inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "x86_64-linux"
@@ -180,7 +180,7 @@ repos:
         pass_filenames: false
       - id: deadnix
         name: deadnix (unused nix)
-        entry: deadnix
+        entry: deadnix --fail
         language: system
         files: \.nix$
 ```
@@ -190,6 +190,11 @@ formatters and linters as local `language: system` hooks (entry = the
 devShell binary, `files:` regex matching the language's extensions) and add
 the tools to the devShell too. LSPs are never hooked — they are editor-side
 and reach the editor through the devShell `PATH`.
+
+`deadnix` runs as `deadnix --fail`: without `--fail` it reports unused code
+but exits 0, so the hook never gates. For the same reason the `flake.nix`
+template binds only the inputs it uses — an unused `self` in `inputs@{ ... }`
+would fail the deadnix check.
 
 ## .editorconfig
 
@@ -385,7 +390,7 @@ automatically, with module internals living under a `./nix` directory.
   of the module tree:
 
   ```nix
-  outputs = inputs@{ self, flake-parts, ... }:
+  outputs = inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin"
       "aarch64-darwin" ];
