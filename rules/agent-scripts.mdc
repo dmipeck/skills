@@ -1,17 +1,29 @@
 ---
-description: Write throwaway scripts under .agents/scripts/; no inline -c/heredoc programs
+description: Write throwaway scripts to storage for potential re-use
 alwaysApply: true
 ---
 
 # Agent throwaway scripts
 
-One-time / throwaway programs go in `.agents/scripts/`, not inline in the
-shell.
+Scripts an agent writes live in a `scripts/` dir under `.agents/`, not inline
+in the shell. Pick the scope that fits:
+
+| Scope | Location |
+| --- | --- |
+| This project only | `<repo>/.agents/scripts/` |
+| Useful beyond this project | `~/.agents/scripts/` |
+
+Prefer `~/.agents/scripts/` whenever the script would likely help again in
+another repo — reusable analysis, codegen, API probing, environment checks.
+Keep it project-local when it only means something there (project paths,
+project data). Promote a project script to `~/.agents/scripts/` once it proves
+reusable.
 
 ## Do
 
-1. Ensure `.agents/scripts/` is in `.git/info/exclude` before writing there.
-2. Write `.agents/scripts/<short-purpose>.<ext>` (kebab-case; real extension).
+1. Project scripts: ensure `.agents/scripts/` is in `.git/info/exclude`
+   first. `~/.agents/` lives outside any repo and is never committed.
+2. Write `<short-purpose>.<ext>` (kebab-case; real extension).
 3. Run that file (`bash …`, `python …`, etc.).
 4. Do not commit these files unless the user asks to promote one.
 
@@ -46,4 +58,7 @@ EOF
 # ✅ GOOD
 # .agents/scripts/parse-ci-json.py
 python .agents/scripts/parse-ci-json.py
+
+# reusable → ~/.agents/scripts/
+python ~/.agents/scripts/probe-api.py
 ```
