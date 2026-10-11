@@ -136,7 +136,7 @@ def allowed_job_names(workflow: str) -> frozenset[str]:
 
 
 def decide(runs: tuple[Run, ...], *, fail_on_allowed: bool) -> Decision:
-    """Halt on the first hard failure; otherwise wait or judge finished runs."""
+    """Halt on hard failure or superseded; otherwise wait or judge aggregates."""
     if not runs:
         return Decision(Verdict.WAIT, "pending", runs=runs)
 
@@ -148,13 +148,13 @@ def decide(runs: tuple[Run, ...], *, fail_on_allowed: bool) -> Decision:
                 continue
             return Decision(Verdict.FAILED, "job", job=job, run=run, runs=runs)
 
-    pending = tuple(job for run in runs for job in run.jobs if not job.done)
-    if pending or any(run.status == "pending" for run in runs):
-        return Decision(Verdict.WAIT, "pending", pending=pending, runs=runs)
-
     superseded = next((run for run in runs if run.superseded), None)
     if superseded is not None:
         return Decision(Verdict.SUPERSEDED, "superseded", run=superseded, runs=runs)
+
+    pending = tuple(job for run in runs for job in run.jobs if not job.done)
+    if pending or any(run.status == "pending" for run in runs):
+        return Decision(Verdict.WAIT, "pending", pending=pending, runs=runs)
 
     blocked = next((run for run in runs if run.status == "blocked"), None)
     if blocked is not None:
