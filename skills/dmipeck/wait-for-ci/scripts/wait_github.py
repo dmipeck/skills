@@ -30,7 +30,6 @@ from decide import (
 )
 
 KINDS = frozenset({"pr", "branch", "tag", "sha", "run"})
-ACTIVE_STATUSES = frozenset({"queued", "in_progress", "waiting", "requested", "pending"})
 HARD_AGGREGATE = frozenset({"failure", "timed_out", "startup_failure"})
 
 
@@ -83,18 +82,7 @@ def github_run(
 
 
 def select_runs(rows: Sequence[Mapping[str, Any]]) -> tuple[Mapping[str, Any], ...]:
-    by_workflow: dict[str, list[Mapping[str, Any]]] = {}
-    for row in rows:
-        name = str(row.get("workflowName") or row.get("name") or row.get("path") or "")
-        by_workflow.setdefault(name, []).append(row)
-    picked: list[Mapping[str, Any]] = []
-    for group in by_workflow.values():
-        active = [row for row in group if str(row.get("status") or "") in ACTIVE_STATUSES]
-        if active:
-            picked.append(max(active, key=_created_key))
-        else:
-            picked.append(max(group, key=_created_key))
-    return tuple(picked)
+    return tuple(rows)
 
 
 def superseded_cancelled(cancelled: bool, *, sha_moved: bool, newer_run: bool) -> bool:
@@ -119,10 +107,6 @@ def sha_from_tag_ref(
     if obj["type"] == "tag" and tag_object is not None:
         return str(tag_object["object"]["sha"])
     raise TargetError("annotated tag could not be peeled to a commit")
-
-
-def _created_key(row: Mapping[str, Any]) -> str:
-    return str(row.get("createdAt") or row.get("created_at") or "")
 
 
 def _run_gh(args: Sequence[str], *, runner: Callable[[Sequence[str]], str] | None = None) -> str:
@@ -409,15 +393,19 @@ def fetch_runs(
     return tuple(by_id.values())
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(
+    argv: Sequence[str] | None = None,
+    *,
+    runner: Callable[[Sequence[str]], str] | None = None,
+) -> int:
     parser = argument_parser("wait_github.py")
     args = parser.parse_args(list(argv) if argv is not None else None)
     try:
         targets = parse_targets(args.targets, KINDS)
         remote = _repo_from_git()
-        plan = resolve_plan(targets, remote.slug)
+        plan = resolve_plan(targets, remote.slug, runner=runner)
         decision = watch(
-            lambda: fetch_runs(plan),
+            lambda: fetch_runs(plan, runner=runner),
             fail_on_allowed=args.fail_on_allowed,
             timeout_s=args.timeout,
             sleep=time.sleep,
