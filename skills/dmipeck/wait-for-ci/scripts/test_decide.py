@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from decide import Decision, Job, Run, Verdict, decide
+from decide import Decision, Job, Run, Verdict, decide, exit_code, format_report, watch
 
 
 def job(
@@ -147,5 +147,110 @@ class DecideAggregateTests(unittest.TestCase):
                 self.assertIn(decision.reason, {"aggregate", "blocked"})
 
 
+class FormatAndExitTests(unittest.TestCase):
+    def test_ok_report_and_exit(self) -> None:
+        decision = Decision(Verdict.OK, "ok")
+        self.assertEqual(format_report(decision), "OK\n")
+        self.assertEqual(exit_code(Verdict.OK), 0)
+
+    def test_job_failure_report(self) -> None:
+        failed = job("lint", conclusion="failure", url="https://ci/j")
+        decision = Decision(Verdict.FAILED, "job", job=failed, run=run())
+        self.assertEqual(
+            format_report(decision),
+            "Failed\njob: lint\nconclusion: failure\nurl: https://ci/j\n",
+        )
+        self.assertEqual(exit_code(Verdict.FAILED), 1)
+
+    def test_aggregate_and_blocked_reports(self) -> None:
+        agg = Decision(Verdict.FAILED, "aggregate", run=run("9", status="failure", url="https://ci/r"))
+        self.assertEqual(
+            format_report(agg),
+            "Failed\naggregate: failure\nrun: 9\nurl: https://ci/r\n",
+        )
+        blocked = Decision(Verdict.FAILED, "blocked", run=run("9", status="blocked", url="https://ci/r"))
+        self.assertEqual(
+            format_report(blocked),
+            "Blocked\naggregate: blocked\nrun: 9\nurl: https://ci/r\n",
+        )
+
+    def test_superseded_and_timeout_reports(self) -> None:
+        superseded = Decision(Verdict.SUPERSEDED, "superseded", run=run("3", url="https://ci/r"))
+        self.assertEqual(format_report(superseded), "Superseded\nrun: 3\nurl: https://ci/r\n")
+        self.assertEqual(exit_code(Verdict.SUPERSEDED), 2)
+        pending = job("test", done=False, conclusion=None, url="https://ci/j")
+        timed = Decision(
+            Verdict.TIMED_OUT,
+            "timeout",
+            pending=(pending,),
+            runs=(run(jobs=(pending,), status="pending"),),
+        )
+        self.assertEqual(
+            format_report(timed),
+            "Timed out\njob: test\nstatus: pending\nurl: https://ci/j\n",
+        )
+        self.assertEqual(exit_code(Verdict.TIMED_OUT), 3)
+
+
+class WatchTests(unittest.TestCase):
+    def test_watch_returns_terminal_without_sleep_when_already_done(self) -> None:
+        sleeps: list[float] = []
+        decision = watch(
+            lambda: (run(jobs=(job("test"),), status="success"),),
+            fail_on_allowed=False,
+            timeout_s=None,
+            sleep=sleeps.append,
+            monotonic=lambda: 0.0,
+        )
+        self.assertEqual(decision.verdict, Verdict.OK)
+        self.assertEqual(sleeps, [])
+
+    def test_watch_backoff_doubles_to_max(self) -> None:
+        sleeps: list[float] = []
+        clock = {"t": 0.0}
+        polls = {"n": 0}
+
+        def fetch() -> tuple[Run, ...]:
+            polls["n"] += 1
+            if polls["n"] < 4:
+                return (run(jobs=(job("test", done=False, conclusion=None),), status="pending"),)
+            return (run(jobs=(job("test"),), status="success"),)
+
+        def sleep(delay: float) -> None:
+            sleeps.append(delay)
+            clock["t"] += delay
+
+        decision = watch(
+            fetch,
+            fail_on_allowed=False,
+            timeout_s=None,
+            sleep=sleep,
+            monotonic=lambda: clock["t"],
+        )
+        self.assertEqual(decision.verdict, Verdict.OK)
+        self.assertEqual(sleeps, [15.0, 30.0, 60.0])
+
+    def test_watch_timeout_lists_unfinished_jobs(self) -> None:
+        sleeps: list[float] = []
+        clock = {"t": 0.0}
+        pending = job("test", done=False, conclusion=None, url="https://ci/j")
+
+        def sleep(delay: float) -> None:
+            sleeps.append(delay)
+            clock["t"] += delay
+
+        decision = watch(
+            lambda: (run(jobs=(pending,), status="pending"),),
+            fail_on_allowed=False,
+            timeout_s=20.0,
+            sleep=sleep,
+            monotonic=lambda: clock["t"],
+        )
+        self.assertEqual(decision.verdict, Verdict.TIMED_OUT)
+        self.assertEqual(decision.pending, (pending,))
+        self.assertEqual(sleeps, [15.0, 5.0])
+
+
 if __name__ == "__main__":
     unittest.main()
+
