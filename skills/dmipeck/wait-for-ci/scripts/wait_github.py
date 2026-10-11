@@ -223,12 +223,11 @@ def _workflow_yaml(
     if key in cache:
         return cache[key]
     encoded = urllib.parse.quote(path, safe="/")
+    ref = urllib.parse.quote(head_sha, safe="")
     payload = _gh_json(
         [
             "api",
-            f"repos/{repo}/contents/{encoded}",
-            "-f",
-            f"ref={head_sha}",
+            f"repos/{repo}/contents/{encoded}?ref={ref}",
             "--jq",
             "{content:.content}",
         ],
