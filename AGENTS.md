@@ -14,6 +14,7 @@ Own and evolve portable agent tooling as files in this tree:
 | `agents/<id>.md` | Flat subagents / agents |
 | `rules/*.mdc` | Always-on and scoped Cursor rules |
 | `mcp.json` | MCP server definitions (Cursor-shaped) |
+| `GLOSSARY.md` | Domain vocabulary (single-context repo) |
 
 home-manager symlinks this checkout into `~/.cursor/{skills,agents,rules}` and
 `~/.cursor/mcp.json`. Edit and commit here; content changes do not require
