@@ -124,7 +124,7 @@ class DecideAggregateTests(unittest.TestCase):
         )
         self.assertEqual(decision.verdict, Verdict.SUPERSEDED)
 
-    def test_superseded_waits_while_jobs_pending(self) -> None:
+    def test_superseded_fails_fast_while_jobs_pending(self) -> None:
         decision = decide(
             (
                 run(
@@ -135,7 +135,7 @@ class DecideAggregateTests(unittest.TestCase):
             ),
             fail_on_allowed=False,
         )
-        self.assertEqual(decision.verdict, Verdict.WAIT)
+        self.assertEqual(decision.verdict, Verdict.SUPERSEDED)
 
     def test_aggregate_failure_is_failed(self) -> None:
         decision = decide(
