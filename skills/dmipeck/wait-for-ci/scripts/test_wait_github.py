@@ -266,7 +266,7 @@ jobs:
                 )
             if "actions/runs/7" in joined and "head_sha" in joined:
                 return json.dumps({"path": ".github/workflows/ci.yml", "head_sha": "abc"})
-            if "contents/.github/workflows/ci.yml" in joined:
+            if "contents/.github/workflows/ci.yml?ref=abc" in joined:
                 return json.dumps({"content": b64})
             raise AssertionError(joined)
 
