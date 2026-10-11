@@ -9,6 +9,7 @@ from typing import Any
 
 from decide import Job, Run, Target, Verdict, decide
 from wait_gitea import (
+    branch_has_newer_run,
     commit_sha_from_ref,
     fetch_runs,
     map_job,
@@ -16,6 +17,7 @@ from wait_gitea import (
     normalize_conclusion,
     resolve_watch,
     run_aggregate,
+    superseded_cancelled,
 )
 
 
@@ -122,6 +124,35 @@ class RunMappingTests(unittest.TestCase):
         )
         self.assertEqual(run.status, "cancelled")
         self.assertFalse(run.superseded)
+
+    def test_cancelled_with_newer_run_is_superseded(self) -> None:
+        run = map_run(
+            {
+                "id": 3,
+                "status": "completed",
+                "conclusion": "cancelled",
+                "html_url": "https://gitea.test/r/3",
+                "head_sha": "abc",
+            },
+            (),
+            tip_sha="abc",
+            newer_run=True,
+        )
+        self.assertTrue(run.superseded)
+
+    def test_superseded_cancelled_helpers(self) -> None:
+        self.assertTrue(superseded_cancelled(True, tip_moved=True, newer_run=False))
+        self.assertTrue(superseded_cancelled(True, tip_moved=False, newer_run=True))
+        self.assertFalse(superseded_cancelled(True, tip_moved=False, newer_run=False))
+        self.assertFalse(superseded_cancelled(False, tip_moved=True, newer_run=True))
+
+    def test_branch_has_newer_run_by_id_or_created(self) -> None:
+        rows = (
+            {"id": 3, "created_at": "2026-01-01T00:00:00Z"},
+            {"id": 9, "created_at": "2026-01-01T01:00:00Z"},
+        )
+        self.assertTrue(branch_has_newer_run(rows, "3", "2026-01-01T00:00:00Z"))
+        self.assertFalse(branch_has_newer_run(rows, "9", "2026-01-01T01:00:00Z"))
 
     def test_pending_run(self) -> None:
         self.assertEqual(run_aggregate("in_progress", None), "pending")
@@ -249,6 +280,65 @@ jobs:
         decision = decide(runs, fail_on_allowed=False)
         self.assertEqual(decision.verdict, Verdict.FAILED)
         self.assertEqual(decision.job.name, "lint")
+
+    def test_fetch_cancelled_with_newer_branch_run_is_superseded(self) -> None:
+        responses = {
+            "repos/o/r/actions/runs?head_sha=old&page=1&limit=20": {
+                "workflow_runs": [
+                    {
+                        "id": 3,
+                        "status": "completed",
+                        "conclusion": "cancelled",
+                        "html_url": "https://gitea.test/r/3",
+                        "head_sha": "old",
+                        "head_branch": "feat",
+                        "created_at": "2026-01-01T00:00:00Z",
+                        "path": ".gitea/workflows/ci.yml",
+                    }
+                ]
+            },
+            "repos/o/r/actions/runs/3": {
+                "id": 3,
+                "status": "completed",
+                "conclusion": "cancelled",
+                "html_url": "https://gitea.test/r/3",
+                "head_sha": "old",
+                "head_branch": "feat",
+                "created_at": "2026-01-01T00:00:00Z",
+                "path": ".gitea/workflows/ci.yml",
+            },
+            "repos/o/r/actions/runs/3/jobs?page=1&limit=100": {
+                "jobs": [
+                    {
+                        "name": "test",
+                        "status": "completed",
+                        "conclusion": "cancelled",
+                        "html_url": "https://gitea.test/j/1",
+                    }
+                ]
+            },
+            "repos/o/r/contents/.gitea/workflows/ci.yml?ref=old": {
+                "content": base64.b64encode(b"jobs:\n  test:\n    runs-on: ubuntu-latest\n").decode()
+            },
+            "repos/o/r/git/refs/heads/feat": {
+                "object": {"type": "commit", "sha": "old"},
+            },
+            "repos/o/r/actions/runs?branch=feat&page=1&limit=5": {
+                "workflow_runs": [
+                    {"id": 3, "created_at": "2026-01-01T00:00:00Z"},
+                    {"id": 8, "created_at": "2026-01-01T01:00:00Z"},
+                ]
+            },
+        }
+
+        def runner(cmd: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+            path = cmd[2]
+            return subprocess.CompletedProcess(cmd, 0, json.dumps(responses[path]), "")
+
+        runs = fetch_runs((frozenset(), frozenset({"old"})), "o/r", runner=runner)
+        self.assertEqual(len(runs), 1)
+        self.assertTrue(runs[0].superseded)
+        self.assertEqual(decide(runs, fail_on_allowed=False).verdict, Verdict.SUPERSEDED)
 
 
 if __name__ == "__main__":

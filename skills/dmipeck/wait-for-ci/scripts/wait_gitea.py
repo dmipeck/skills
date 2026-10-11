@@ -80,16 +80,45 @@ def map_job(raw: Mapping[str, Any], *, allowed: Set[str]) -> Job:
     return Job(name, url, done, conclusion, name in allowed)
 
 
+def superseded_cancelled(cancelled: bool, *, tip_moved: bool, newer_run: bool) -> bool:
+    return cancelled and (tip_moved or newer_run)
+
+
+def branch_has_newer_run(
+    rows: Sequence[Mapping[str, Any]],
+    run_id: str,
+    created_at: str,
+) -> bool:
+    for row in rows:
+        other_id = str(row.get("id") or "")
+        if not other_id or other_id == run_id:
+            continue
+        if created_at and str(row.get("created_at") or "") > created_at:
+            return True
+        try:
+            if int(other_id) > int(run_id):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 def map_run(
     raw: Mapping[str, Any],
     jobs: tuple[Job, ...],
     *,
     tip_sha: str | None,
+    newer_run: bool = False,
 ) -> Run:
     """Map a Gitea Actions run payload onto ``Run``."""
     aggregate = run_aggregate(raw.get("status"), raw.get("conclusion"))
     head_sha = str(raw.get("head_sha") or "")
-    superseded = aggregate == "cancelled" and bool(tip_sha) and bool(head_sha) and tip_sha != head_sha
+    tip_moved = bool(tip_sha) and bool(head_sha) and tip_sha != head_sha
+    superseded = superseded_cancelled(
+        aggregate == "cancelled",
+        tip_moved=tip_moved,
+        newer_run=newer_run,
+    )
     return Run(
         str(raw.get("id")),
         str(raw.get("html_url") or raw.get("url") or ""),
@@ -126,19 +155,20 @@ def commit_sha_from_ref(
     return str(tagged["sha"])
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Sequence[str] | None = None, *, runner: Runner | None = None) -> int:
     parser = argument_parser("wait_gitea.py")
     args = parser.parse_args(list(argv) if argv is not None else None)
+    active_runner = runner or subprocess.run
     try:
         targets = parse_targets(args.targets, KINDS)
         remotes = parse_remotes(_git_remote_v())
         remote = choose_remote(remotes, reject_hosts=REJECT_HOSTS)
-        resolved = resolve_watch(targets, remote.slug, runner=subprocess.run)
+        resolved = resolve_watch(targets, remote.slug, runner=active_runner)
     except TargetError as exc:
         print(f"wait_gitea.py: error: {exc}", file=sys.stderr)
         return 1
     decision = watch(
-        lambda: fetch_runs(resolved, remote.slug, runner=subprocess.run),
+        lambda: fetch_runs(resolved, remote.slug, runner=active_runner),
         fail_on_allowed=args.fail_on_allowed,
         timeout_s=args.timeout,
         sleep=time.sleep,
@@ -212,6 +242,7 @@ def fetch_runs(
         for item in _workflow_runs(payload):
             by_id[str(item.get("id"))] = item
     tip_cache: dict[str, str | None] = {}
+    newer_cache: dict[str, list[Mapping[str, Any]]] = {}
     yaml_cache: dict[tuple[str, str], frozenset[str]] = {}
     runs: list[Run] = []
     for run_id, raw in sorted(by_id.items(), key=lambda item: item[0]):
@@ -226,7 +257,21 @@ def fetch_runs(
         branch = str(raw.get("head_branch") or "")
         if branch not in tip_cache:
             tip_cache[branch] = _branch_tip(slug, branch, runner=runner) if branch else None
-        runs.append(map_run(raw, jobs, tip_sha=tip_cache[branch]))
+        newer = False
+        aggregate = run_aggregate(raw.get("status"), raw.get("conclusion"))
+        if branch and aggregate == "cancelled":
+            if branch not in newer_cache:
+                payload = tea_api(
+                    f"repos/{slug}/actions/runs?branch={quote(branch, safe='')}&page=1&limit=5",
+                    runner=runner,
+                )
+                newer_cache[branch] = _workflow_runs(payload)
+            newer = branch_has_newer_run(
+                newer_cache[branch],
+                run_id,
+                str(raw.get("created_at") or ""),
+            )
+        runs.append(map_run(raw, jobs, tip_sha=tip_cache[branch], newer_run=newer))
     return tuple(runs)
 
 
