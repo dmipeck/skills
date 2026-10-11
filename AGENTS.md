@@ -37,3 +37,17 @@ referenced from `mcp.json` via `${env:…}`.
   Then place/commit the result as `skills/<owner>/<skill-id>/`.
 - Keep changes scoped to the skill, agent, rule, or MCP entry you are changing.
 - See `README.md` for deploy/symlink layout.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (`gh`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical roles map 1:1 to tracker labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
