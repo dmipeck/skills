@@ -72,7 +72,7 @@ class GithubJobTests(unittest.TestCase):
 
 
 class SelectRunsTests(unittest.TestCase):
-    def test_one_per_workflow_prefers_active(self) -> None:
+    def test_keeps_every_run_for_sha(self) -> None:
         rows = [
             {
                 "databaseId": 1,
@@ -94,9 +94,9 @@ class SelectRunsTests(unittest.TestCase):
             },
         ]
         selected = select_runs(rows)
-        self.assertEqual([row["databaseId"] for row in selected], [2, 3])
+        self.assertEqual([row["databaseId"] for row in selected], [1, 2, 3])
 
-    def test_newest_completed_when_none_active(self) -> None:
+    def test_keeps_re_runs_of_same_workflow(self) -> None:
         rows = [
             {
                 "databaseId": 1,
@@ -112,7 +112,7 @@ class SelectRunsTests(unittest.TestCase):
             },
         ]
         selected = select_runs(rows)
-        self.assertEqual([row["databaseId"] for row in selected], [2])
+        self.assertEqual([row["databaseId"] for row in selected], [1, 2])
 
 
 class SupersededTests(unittest.TestCase):
