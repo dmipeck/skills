@@ -1,5 +1,5 @@
 ---
-description: Store agent scripts under .agents/scripts/ (or ~/.agents/ when reusable); no inline -c/heredoc programs
+description: Write throwaway scripts to storage for potential re-use
 alwaysApply: true
 ---
 
