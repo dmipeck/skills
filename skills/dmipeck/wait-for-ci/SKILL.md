@@ -2,85 +2,80 @@
 name: wait-for-ci
 description: >-
   Wait for CI to reach a definitive result. Use when waiting on GitHub
-  Actions, GitLab pipelines, or check runs.
+  Actions, GitLab pipelines, Gitea Actions, or check runs.
 ---
 
 # Wait for CI
 
-Watch **jobs**, not the aggregate pipeline/workflow. Aggregate status often
-stays "pending"/"running" until every job finishes — that hides early failures
-and wastes the wait.
+Run the forge script for the host. Scripts watch **jobs** (not aggregate
+status), fail-fast on the first hard failure, and print a short report.
 
-## Loop
+## Scripts
 
-1. **Resolve** the target run: PR/MR, branch, commit SHA, or explicit
-   pipeline/workflow id. Prefer the run for the HEAD just pushed.
-2. **List jobs** for that run (refresh each poll). Track each job's
-   conclusion/status and whether it is **allowed to fail**.
-3. **Fail fast:** if any job has failed and is **not** allowed to fail → stop.
-   Report the pipeline/run as **failed** (job name, conclusion, URL/id). Do
-   not wait for remaining jobs.
+| Host | Script | CLI |
+|---|---|---|
+| GitHub | `scripts/wait_github.py` | `gh` |
+| GitLab | `scripts/wait_gitlab.py` | `glab` |
+| Gitea | `scripts/wait_gitea.py` | `tea` |
+
+```bash
+python <this-skill>/scripts/wait_github.py pr:42
+python <this-skill>/scripts/wait_gitlab.py mr:7 --timeout 1800
+python <this-skill>/scripts/wait_gitea.py branch:main --fail-on-allowed
+```
+
+Pass one or more `KIND:VALUE` targets (required; never infer from the
+checkout). Multiple targets are watched as a union (deduped).
+
+| Host | Kinds |
+|---|---|
+| GitHub / Gitea | `pr`, `branch`, `tag`, `sha`, `run` |
+| GitLab | `mr`, `branch`, `tag`, `sha`, `pipeline` |
+
+Flags:
+
+- `--fail-on-allowed` — treat the first allowed/soft failure like a hard
+  failure (default: ignore soft fails for halt, still wait for them before
+  the final aggregate check).
+- `--timeout <seconds>` — stop with **Timed out** and list unfinished jobs.
+  Omit to poll until a terminal verdict.
+
+## Loop (implemented by the scripts)
+
+1. **Resolve** each target once at startup (PR/MR/branch/tag → commit SHA;
+   `run` / `pipeline` → that id only). Prefer the HEAD just pushed.
+2. **List jobs** each poll. Track conclusion/status and whether the job is
+   **allowed to fail**.
+3. **Fail fast:** first job with a hard conclusion (`failure`, `timed_out`,
+   `startup_failure`, or forge alias) that is **not** allowed → stop.
+   Report **Failed** (job name, conclusion, URL). Do not wait for the rest.
 4. **Continue** while any job is queued/running/pending (or not yet created
-   when the matrix/DAG is still expanding). Poll again after a short backoff
-   (start ~15–30s; back off up to ~60s). Prefer `AwaitShell` / sleep tools
-   over busy loops.
-5. **All jobs terminal** and none hard-failed → **sanity-check** any available
-   aggregate **pipeline / workflow / check-suite status**.
-   - Green / success → report **OK**.
-   - Not green → report **failed** (or blocked/cancelled/unknown) with the
-     aggregate status and any odd job conclusions — do not claim OK.
-6. **Timeout:** if the user set a deadline, stop when it hits and report
-   still-running jobs. Otherwise keep polling until step 3 or 5.
+   while the matrix/DAG expands). Backoff ~15s, doubling up to ~60s.
+5. **All jobs terminal** and none hard-failed → sanity-check aggregate
+   pipeline/workflow status. Green → **OK**. Otherwise **Failed** /
+   **Blocked** with the aggregate — never claim OK.
+6. Cancelled by a newer push → **Superseded**, not OK.
 
-Allowed-to-fail jobs (GitLab `allow_failure`, GitHub continue-on-error /
-optional checks, soft required-status exclusions) **never** alone make the
-wait fail. Ignore their failures for the fail-fast rule; still wait for them
-to finish before the final sanity check so the aggregate status is stable.
+Allowed failure: GitLab job `allow_failure`; GitHub/Gitea only a literal
+job-level `continue-on-error: true` in that run's workflow (job id or
+static `name`). Branch-protection "optional" alone does not mark allowed.
 
 ## Platform notes
 
-Use whatever CLI/API the repo already uses (`gh`, `glab`, MCP). Map the same
-loop onto local names:
-
-| Concept | GitHub Actions | GitLab CI |
-|---|---|---|
-| Run | workflow run | pipeline |
-| Unit | job (and check-run) | job |
-| Soft fail | continue-on-error / optional | `allow_failure` |
-| Aggregate | workflow / check suite | pipeline status |
-
-**GitHub (examples):**
-
-```bash
-gh run list --commit <sha> --limit 5
-gh run view <run-id> --json status,conclusion,jobs,url
-# or: gh api .../actions/runs/<run-id>/jobs
-```
-
-Treat a job as hard-failed when `conclusion` is `failure` (or
-`timed_out` / `startup_failure`) and it is not continue-on-error. Cancelled
-by a newer push → report **superseded**, not OK.
-
-**GitLab (examples):**
-
-```bash
-glab ci status
-glab ci view
-glab api "projects/<id>/pipelines/<pipeline-id>/jobs"
-```
-
-Hard-fail when `status`/`failure` and `allow_failure` is false. Pipeline
-statuses to accept as green on the sanity check: `success`. Treat `failed`,
-`canceled`, `skipped` (whole pipeline), `blocked` as not OK unless the user
-explicitly accepts that state.
+| Concept | GitHub Actions | GitLab CI | Gitea Actions |
+|---|---|---|---|
+| Run | workflow run | pipeline | workflow run |
+| Unit | job | job | job |
+| Soft fail | `continue-on-error: true` | `allow_failure` | `continue-on-error: true` |
+| Aggregate | workflow / check suite | pipeline status | workflow run |
 
 ## Report shape
 
-Keep the final reply short:
+Stdout is short; exit codes: OK=0, Failed=1, Superseded=2, Timed out=3.
 
-- **OK** — all jobs done, no hard failures, aggregate status green.
-- **Failed** — first hard-failed job (name + link); aggregate if any.
-- **Superseded / timed out / blocked** — say which; list unfinished jobs when
-  relevant.
+- **OK** — all jobs done, no hard failures, aggregate green.
+- **Failed** — first hard-failed job (name + link), or non-green aggregate.
+- **Superseded / Timed out / Blocked** — say which; list unfinished jobs
+  when relevant.
 
 Do not dump full job logs unless asked or needed to name the failing step.
