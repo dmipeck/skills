@@ -5,10 +5,10 @@ description: Go testing conventions.
 
 # Testing in Go
 
+`testing` owns unit-vs-integration policy; this file covers the Go mechanics.
 `github.com/stretchr/testify` for assertions; integration tests run against
 real PostgreSQL in Docker via `github.com/testcontainers/testcontainers-go`
-+ `postgres` module. Unit tests stay fast and hermetic; integration opt-in
-behind a build tag.
++ `postgres` module.
 
 ## Rules
 
