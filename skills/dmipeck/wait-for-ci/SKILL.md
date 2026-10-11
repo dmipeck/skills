@@ -43,7 +43,7 @@ Flags:
 ## Loop (implemented by the scripts)
 
 1. **Resolve** each target once at startup (PR/MR/branch/tag → commit SHA;
-   `run` / `pipeline` → that id only). Prefer the HEAD just pushed.
+   `run` / `pipeline` → that id only). Targets are required; never infer.
 2. **List jobs** each poll. Track conclusion/status and whether the job is
    **allowed to fail**.
 3. **Fail fast:** first job with a hard conclusion (`failure`, `timed_out`,
