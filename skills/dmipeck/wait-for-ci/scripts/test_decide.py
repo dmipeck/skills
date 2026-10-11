@@ -3,7 +3,24 @@ from __future__ import annotations
 
 import unittest
 
-from decide import Decision, Job, Run, Verdict, decide, exit_code, format_report, watch
+from decide import (
+    Decision,
+    Job,
+    Remote,
+    Run,
+    Target,
+    TargetError,
+    Verdict,
+    allowed_job_names,
+    argument_parser,
+    choose_remote,
+    decide,
+    exit_code,
+    format_report,
+    parse_remotes,
+    parse_targets,
+    watch,
+)
 
 
 def job(
@@ -249,6 +266,94 @@ class WatchTests(unittest.TestCase):
         self.assertEqual(decision.verdict, Verdict.TIMED_OUT)
         self.assertEqual(decision.pending, (pending,))
         self.assertEqual(sleeps, [15.0, 5.0])
+
+
+class TargetTests(unittest.TestCase):
+    def test_parse_targets(self) -> None:
+        kinds = frozenset({"pr", "branch", "sha", "run", "tag"})
+        self.assertEqual(
+            parse_targets(["pr:12", "sha:abc"], kinds),
+            (Target("pr", "12"), Target("sha", "abc")),
+        )
+
+    def test_parse_targets_rejects_empty_and_bad_kind(self) -> None:
+        kinds = frozenset({"pr", "branch"})
+        with self.assertRaises(TargetError):
+            parse_targets([], kinds)
+        with self.assertRaises(TargetError):
+            parse_targets(["pr"], kinds)
+        with self.assertRaises(TargetError):
+            parse_targets(["mr:1"], kinds)
+
+
+class RemoteTests(unittest.TestCase):
+    def test_parse_and_choose_origin(self) -> None:
+        text = (
+            "origin\tgit@github.com:dmipeck/skills.git (fetch)\n"
+            "origin\tgit@github.com:dmipeck/skills.git (push)\n"
+            "upstream\thttps://github.com/other/skills.git (fetch)\n"
+        )
+        remotes = parse_remotes(text)
+        self.assertEqual(
+            remotes,
+            (
+                Remote("origin", "github.com", "dmipeck/skills"),
+                Remote("upstream", "github.com", "other/skills"),
+            ),
+        )
+        chosen = choose_remote(remotes, accept_hosts=frozenset({"github.com"}))
+        self.assertEqual(chosen.name, "origin")
+        self.assertEqual(chosen.slug, "dmipeck/skills")
+
+    def test_choose_remote_rejects_when_ambiguous(self) -> None:
+        remotes = (
+            Remote("a", "gitlab.com", "org/a"),
+            Remote("b", "gitlab.com", "org/b"),
+        )
+        with self.assertRaises(TargetError):
+            choose_remote(remotes, accept_hosts=frozenset({"gitlab.com"}))
+
+
+class AllowedJobNamesTests(unittest.TestCase):
+    def test_literal_continue_on_error_true(self) -> None:
+        yaml = """
+name: ci
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: true
+  soft:
+    name: Soft Check
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - continue-on-error: true
+        run: false
+  expr:
+    continue-on-error: ${{ true }}
+    name: Dyn ${{ matrix.os }}
+    runs-on: ubuntu-latest
+"""
+        self.assertEqual(allowed_job_names(yaml), frozenset({"soft", "Soft Check"}))
+
+    def test_missing_jobs_is_empty(self) -> None:
+        self.assertEqual(allowed_job_names("name: only\n"), frozenset())
+
+
+class ArgumentParserTests(unittest.TestCase):
+    def test_shared_flags(self) -> None:
+        parser = argument_parser("wait_github.py")
+        args = parser.parse_args(["--fail-on-allowed", "--timeout", "90", "pr:1", "branch:main"])
+        self.assertTrue(args.fail_on_allowed)
+        self.assertEqual(args.timeout, 90.0)
+        self.assertEqual(args.targets, ["pr:1", "branch:main"])
+
+    def test_requires_targets(self) -> None:
+        parser = argument_parser("wait_github.py")
+        with self.assertRaises(SystemExit) as raised:
+            parser.parse_args([])
+        self.assertEqual(raised.exception.code, 1)
 
 
 if __name__ == "__main__":
