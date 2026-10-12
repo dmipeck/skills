@@ -56,8 +56,7 @@ Repeat until no open tickets remain:
 2. **Spawn implementers in parallel** — one subagent per frontier ticket.
    Each must:
    - Follow `/implement`
-   - Work in a new git worktree
-     (`git-workflow`: `.agents/worktrees/<ticket-slug>`)
+   - Work in a new git worktree (per `git-workflow`)
    - Base the ticket branch on the **composite** branch (not default)
    - Push and open an MR/PR **targeting the composite branch**
      (GitLab → `glab`; GitHub → `gh`;

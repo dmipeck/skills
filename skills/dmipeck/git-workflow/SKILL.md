@@ -14,9 +14,6 @@ Checklist: change "about to start" to "merged", in order.
 - Pull latest from default branch. Fast-forward (or rebase) — no stale base.
 - Not on a worktree yet → create one. Don't work on the default
   branch checkout.
-- Worktrees must live in `.agents/worktrees/` in the repo root.
-- Create with `git worktree add .agents/worktrees/<change-name> <branch>`.
-- `.agents/worktrees/` → `.git/info/exclude` so it never shows in `git status`.
 - Open the PR/MR early — draft, as soon as the first commit is ready to push.
 - Don't wait for "done". Reviewers and CI see progress live.
 

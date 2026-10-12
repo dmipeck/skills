@@ -18,9 +18,8 @@ conflicts and CI failures, then report. Do **not** merge unless asked.
 3. Note: source branch, target/default branch, HEAD SHA, PR/MR URL, draft
    vs ready.
 
-Work in a checkout of the **source** branch (existing worktree under
-`.agents/worktrees/` if present; otherwise create/use one — never edit on the
-default-branch checkout).
+Work in a checkout of the **source** branch (existing worktree if present;
+otherwise create/use one — never edit on the default-branch checkout).
 
 ## 2. Rebase onto default
 
