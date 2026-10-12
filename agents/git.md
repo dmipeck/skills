@@ -46,8 +46,8 @@ write path.
    missing. Load the `git-workflow` skill before branching, committing, or
    pushing.
 2. Act: perform what was asked — stage and commit (`git add`, `git commit`),
-   branches and worktrees (`git branch`, `git checkout` / `git switch`,
-   `git worktree add`), remotes (`git remote`), tags (`git tag`), histories
+   branches and worktrees (`git branch`, `git checkout` / `git switch`),
+   remotes (`git remote`), tags (`git tag`), histories
    (`git merge`, `git rebase`), sync (`git push`, `git pull`), stash
    (`git stash`). Follow the commit-boundary and conventional-commit rules from
    `git-workflow` / `conventional-commits`.
