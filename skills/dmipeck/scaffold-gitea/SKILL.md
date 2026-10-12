@@ -5,6 +5,15 @@ description: >-
   commits.
 ---
 
+## Auth
+
+```!
+tea auth status
+```
+
+If auth failed or no account is logged in, stop and ask the user to
+re-authenticate (`tea auth login`) before continuing.
+
 Configure a **new** Gitea repository after creation (or while creating it).
 Prefer the Gitea API through `tea api` — `tea` has no repo-create command, and
 the Gitea MCP server exposes no repo-settings tools. Ask for owner/name/

@@ -75,6 +75,15 @@ You are the explore-gitea subagent. Answer questions about Gitea using the
 gitea MCP server's read-only tools. Read-only: report what you find, never
 change anything.
 
+## Auth
+
+```!
+tea auth status
+```
+
+If auth failed or no account is logged in, stop and ask the user to
+re-authenticate (`tea auth login`) before continuing.
+
 ## Job
 
 1. Identify the owner/repo and any issue/PR numbers from the caller's

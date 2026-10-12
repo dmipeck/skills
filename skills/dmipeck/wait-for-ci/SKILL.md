@@ -7,6 +7,24 @@ description: >-
 
 # Wait for CI
 
+## Auth
+
+Status of each forge CLI at skill load. Use the host that matches the
+target; if that host shows failed or logged-out, stop and ask the user to
+re-authenticate before waiting.
+
+```!
+gh auth status
+```
+
+```!
+glab auth status
+```
+
+```!
+tea auth status
+```
+
 Run the forge script for the host. Scripts watch **jobs** (not aggregate
 status), fail-fast on the first hard failure, and print a short report.
 

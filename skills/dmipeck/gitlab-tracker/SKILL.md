@@ -8,6 +8,15 @@ disable-model-invocation: true
 
 # GitLab Tracker (preferred)
 
+## Auth
+
+```!
+glab auth status
+```
+
+If auth failed or no account is logged in, stop and ask the user to
+re-authenticate (`glab auth login`) before continuing.
+
 Preferred GitLab conventions for `/to-spec`, `/to-tickets`, `/wayfinder`,
 and `/triage`. This skill does **not** replace
 `docs/agents/issue-tracker.md` wholesale. It supplies **additional

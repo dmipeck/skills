@@ -9,6 +9,19 @@ argument-hint: <ticket-set-or-parent-issue>
 You are an orchestrator. Use subagents to complete all tasks. Your job is only
 to plan, coordinate, and report.
 
+## Auth
+
+```!
+gh auth status
+```
+
+```!
+glab auth status
+```
+
+If the forge CLI you need shows unauthenticated or failed, stop and ask the
+user to re-authenticate before continuing.
+
 ## Goal
 
 Drive a ticket set from `/to-tickets` to a **composite MR/PR ready for human

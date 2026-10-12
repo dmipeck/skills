@@ -7,6 +7,19 @@ argument-hint: "[pr-number|url|branch]"
 
 # Babysit PR
 
+## Auth
+
+```!
+gh auth status
+```
+
+```!
+glab auth status
+```
+
+If the forge CLI you need shows unauthenticated or failed, stop and ask the
+user to re-authenticate before continuing.
+
 Keep an open PR/MR mergeable. Rebase onto latest default, clear
 conflicts and CI failures, then report. Do **not** merge unless asked.
 
