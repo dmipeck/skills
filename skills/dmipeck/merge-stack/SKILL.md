@@ -20,11 +20,11 @@ merge; **merge-stack** merges many, in order, with optional deploy waits.
 | --- | --- | --- |
 | **Parent** (you) | inherit | Parse **merge order**, spawn agents, **merge gate** only |
 | **PR agent** | cheap for wait/rebase; inherit for CI fixes | `babysit-pr` → **Ready**; parent alone merges |
-| **Deploy agent** | cheap | Wait the **deploy profile** (or skip when `none`) |
+| **Deploy agent** | cheap | Wait the **deploy profile** when profile ≠ `none` |
 
-Spawn **PR agent** and **deploy agent** as separate subagents every time
-(`thrifty`). Parent keeps inherit and stays on order / spawn / **merge
-gate**.
+Spawn a **PR agent** per item (`thrifty`). Spawn a **deploy agent** only
+when **deploy profile** ≠ `none`. Parent keeps inherit and stays on
+order / spawn / **merge gate**.
 
 ## 1. Inputs
 
