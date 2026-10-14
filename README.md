@@ -1,7 +1,7 @@
 # skills
 
 Canonical Cursor Authoring Format for `dmipeck` machines: `skills/`, `agents/`,
-`rules/`, and `mcp.json`.
+`rules/`, `mcp.json`, and `permissions.json`.
 
 home-manager clones this repo to `~/d/github.com/dmipeck/skills` (if missing)
 and creates targeted symlinks:
@@ -10,6 +10,7 @@ and creates targeted symlinks:
 - `~/.cursor/agents` → `$checkout/agents`
 - `~/.cursor/rules` → `$checkout/rules`
 - `~/.cursor/mcp.json` → `$checkout/mcp.json`
+- `~/.cursor/permissions.json` → `$checkout/permissions.json`
 
 Edit files here and commit; no `home-manager switch` is required for content
 changes. Secrets and per-host URLs stay in home-manager as process environment
