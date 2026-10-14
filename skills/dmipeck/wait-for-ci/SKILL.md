@@ -10,8 +10,9 @@ description: >-
 ## Auth
 
 Status of each forge CLI at skill load. Use the host that matches the
-target; if that host shows failed or logged-out, stop and ask the user to
-re-authenticate before waiting.
+target; if that host shows failed or logged-out, run that CLI's login
+before waiting. For GitLab, run `glab auth login` (opens a browser for the
+user to log in).
 
 ```!
 gh auth status

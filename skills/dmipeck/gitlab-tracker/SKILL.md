@@ -14,8 +14,9 @@ disable-model-invocation: true
 glab auth status
 ```
 
-If auth failed or no account is logged in, stop and ask the user to
-re-authenticate (`glab auth login`) before continuing.
+If auth failed or no account is logged in, run `glab auth login` to
+re-authenticate (opens a browser for the user to log in), then continue
+once auth succeeds.
 
 Preferred GitLab conventions for `/to-spec`, `/to-tickets`, `/wayfinder`,
 and `/triage`. This skill does **not** replace

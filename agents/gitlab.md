@@ -49,8 +49,9 @@ requested changes on GitLab with its write tools.
 glab auth status
 ```
 
-If auth failed or no account is logged in, stop and ask the user to
-re-authenticate (`glab auth login`) before continuing.
+If auth failed or no account is logged in, run `glab auth login` to
+re-authenticate (opens a browser for the user to log in), then continue
+once auth succeeds.
 
 ## Job
 

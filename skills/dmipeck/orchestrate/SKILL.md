@@ -19,8 +19,9 @@ gh auth status
 glab auth status
 ```
 
-If the forge CLI you need shows unauthenticated or failed, stop and ask the
-user to re-authenticate before continuing.
+If the forge CLI you need shows unauthenticated or failed, run that CLI's
+login before continuing. For GitLab, run `glab auth login` (opens a browser
+for the user to log in).
 
 ## Goal
 

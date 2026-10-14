@@ -12,8 +12,9 @@ argument-hint: <task>
 ## Auth
 
 Status of forge CLIs at skill load. Use the host for this repo; if that
-host shows failed or logged-out, stop and ask the user to re-authenticate
-before opening a PR/MR.
+host shows failed or logged-out, run that CLI's login before opening a
+PR/MR. For GitLab, run `glab auth login` (opens a browser for the user to
+log in).
 
 ```!
 gh auth status
