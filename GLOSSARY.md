@@ -1,7 +1,7 @@
 # Skills
 
-Canonical Cursor Authoring Format (skills, agents, rules, `mcp.json`) for
-`dmipeck` machines.
+Canonical Cursor Authoring Format (skills, agents, rules, `mcp.json`,
+`permissions.json`) for `dmipeck` machines.
 
 ## Language
 
