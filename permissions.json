@@ -1,1 +1,13 @@
-{}
+{
+  "autoRun": {
+    "allow_instructions": [
+      "Always allow git push and git push --force-with-lease when the push target is not a deployment branch or a stage branch.",
+      "Treat feature, fix, chore, and other non-deployment/non-stage branch names as safe to push and force-push-with-lease without asking."
+    ],
+    "block_instructions": [
+      "Never auto-allow git push or force-push-with-lease when the target is a deployment branch: main, master, develop, trunk, release-*, or v* (version branches/tags). Require approval instead.",
+      "Never auto-allow git push or force-push-with-lease when the target is a stage branch: stage/* or stage-*. Require approval instead.",
+      "Never auto-allow git push --force or git push -f unless --force-with-lease is also present."
+    ]
+  }
+}
