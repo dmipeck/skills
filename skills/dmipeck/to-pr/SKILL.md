@@ -9,6 +9,21 @@ argument-hint: <task>
 
 # To PR
 
+## Auth
+
+Status of forge CLIs at skill load. Use the host for this repo; if that
+host shows failed or logged-out, run that CLI's login before opening a
+PR/MR. For GitLab, run `glab auth login` (opens a browser for the user to
+log in).
+
+```!
+gh auth status
+```
+
+```!
+glab auth status
+```
+
 Slash-only: isolate in a worktree from the latest default tip, do the
 prompted work, open a PR, and do not finish until CI is green.
 

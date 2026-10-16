@@ -8,6 +8,15 @@ disable-model-invocation: true
 
 # Gitea Tracker (preferred)
 
+## Auth
+
+```!
+tea auth status
+```
+
+If auth failed or no account is logged in, stop and ask the user to
+re-authenticate (`tea auth login`) before continuing.
+
 Preferred Gitea conventions for `/to-spec`, `/to-tickets`, `/wayfinder`,
 and `/triage`. This skill does **not** replace
 `docs/agents/issue-tracker.md` wholesale. It supplies **additional

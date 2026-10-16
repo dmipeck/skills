@@ -7,6 +7,20 @@ argument-hint: "[pr-number|url|branch]"
 
 # Babysit PR
 
+## Auth
+
+```!
+gh auth status
+```
+
+```!
+glab auth status
+```
+
+If the forge CLI you need shows unauthenticated or failed, run that CLI's
+login before continuing. For GitLab, run `glab auth login` (opens a browser
+for the user to log in).
+
 Keep an open PR/MR mergeable. Rebase onto latest default, clear
 conflicts and CI failures, then report. Do **not** merge unless asked.
 

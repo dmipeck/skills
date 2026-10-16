@@ -5,6 +5,16 @@ description: >-
   merges.
 ---
 
+## Auth
+
+```!
+glab auth status
+```
+
+If auth failed or no account is logged in, run `glab auth login` to
+re-authenticate (opens a browser for the user to log in), then continue
+once auth succeeds.
+
 Configure a **new** GitLab project after creation (or while creating it). Prefer
 `glab` + the Projects REST API. Ask for project path/visibility only when not
 already decided; otherwise proceed with the defaults below.

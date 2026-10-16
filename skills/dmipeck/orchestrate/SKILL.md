@@ -9,6 +9,20 @@ argument-hint: <ticket-set-or-parent-issue>
 You are an orchestrator. Use subagents to complete all tasks. Your job is only
 to plan, coordinate, and report.
 
+## Auth
+
+```!
+gh auth status
+```
+
+```!
+glab auth status
+```
+
+If the forge CLI you need shows unauthenticated or failed, run that CLI's
+login before continuing. For GitLab, run `glab auth login` (opens a browser
+for the user to log in).
+
 ## Goal
 
 Drive a ticket set from `/to-tickets` to a **composite MR/PR ready for human
