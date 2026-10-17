@@ -3,7 +3,7 @@
     "allow_instructions": [
       "Always allow git push and git push --force-with-lease when the push target is not a deployment branch or a stage branch.",
       "Treat ordinary feature and chore work branches as safe to push and force-push-with-lease without asking.",
-      "Always allow creating and editing files under .agents/skills/** (e.g. SKILL.md and that skill's scripts/, references/, and assets/)."
+      "Always allow creating and editing files under ~/.agents/skills/** (e.g. SKILL.md and that skill's scripts/, references/, and assets/)."
     ],
     "block_instructions": [
       "Never auto-allow git push or force-push-with-lease when the target is a deployment branch. Examples only (not exhaustive): main, master, develop, trunk, release-*, v*. Require approval instead.",
