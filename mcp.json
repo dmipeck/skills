@@ -88,6 +88,26 @@
       "type": "stdio",
       "command": "firebase",
       "args": ["mcp"]
+    },
+    "zulip-littlemonkey": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["zulipchat-mcp"],
+      "env": {
+        "ZULIP_SITE": "https://zulip.littlemonkey.co.nz",
+        "ZULIP_EMAIL": "${env:ZULIP_LITTLEMONKEY_EMAIL}",
+        "ZULIP_API_KEY": "${env:ZULIP_LITTLEMONKEY_API_KEY}"
+      }
+    },
+    "zulip-powertrip": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["zulipchat-mcp"],
+      "env": {
+        "ZULIP_SITE": "https://chat.powertrip.earth",
+        "ZULIP_EMAIL": "${env:ZULIP_POWERTRIP_EMAIL}",
+        "ZULIP_API_KEY": "${env:ZULIP_POWERTRIP_API_KEY}"
+      }
     }
   }
 }
