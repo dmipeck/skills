@@ -33,8 +33,10 @@ repos:
         files: \.nix$
       - id: skills-check
         name: skills check (lock up to date)
-        # Unset GIT_INDEX_FILE: `npx skills check` stages paths that break
-        # write-tree when git commit points the index at a worktree index.
-        entry: bash -c 'unset GIT_INDEX_FILE; npx --yes skills@latest check -p -y'
+        # Unset GIT_INDEX_FILE: `npx skills` stages paths that break write-tree
+        # when git commit points the index at a worktree index.
+        # `update` before `check`: check no longer installs; CI has no
+        # `.agents/skills`, so check alone treats every lock entry as stale.
+        entry: bash -c 'unset GIT_INDEX_FILE; npx --yes skills@latest update -p -y && npx --yes skills@latest check -p -y'
         language: system
         pass_filenames: false
