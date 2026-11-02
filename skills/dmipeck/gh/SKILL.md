@@ -7,22 +7,20 @@ description: >-
 
 # gh
 
-Gate every `gh` session on auth. Do this before the first `gh` command in the
-task.
+Gate every `gh` session on auth. Status below is from skill load — do not
+spend a turn re-running it unless you just finished login.
 
-## 1. Check
+## Auth
 
-```bash
-bash <this-skill>/scripts/check-auth.sh
+```!
+gh auth status
 ```
 
-Pass `--hostname <host>` when targeting a non-`github.com` host.
+Failed / logged out → § Login immediately. Else continue the task.
 
-Exit 0 → continue. Non-zero (or output shows failed / logged out) → §2.
+## Login — JUST DO IT
 
-## 2. Login — JUST DO IT
-
-If check failed, **run login yourself via Shell immediately**:
+**Run login yourself via Shell immediately**:
 
 ```bash
 gh auth login --web --git-protocol https --skip-ssh-key
@@ -33,5 +31,6 @@ Add `--hostname <host>` for GitHub Enterprise / non-default hosts.
 - **Never** ask the user to run `gh auth login`.
 - **Never** ask permission to run it.
 - **Never** stop with "please log in".
-- Open the browser flow, wait until it finishes, re-run §1, then continue the
-  original task.
+- Open the browser flow, wait until it finishes, re-check with
+  `bash <this-skill>/scripts/check-auth.sh` (or `gh auth status`), then
+  continue the original task.

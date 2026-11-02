@@ -7,23 +7,21 @@ description: >-
 
 # tea
 
-Gate every `tea` session on auth. Do this before the first `tea` command in
-the task.
+Gate every `tea` session on auth. Status below is from skill load — do not
+spend a turn re-running it unless you just finished login.
 
-## 1. Check
+## Auth
 
-```bash
-bash <this-skill>/scripts/check-auth.sh
+```!
+tea logins status
 ```
 
-Pass a login name when checking one stored login instead of all.
+Failed, no logins, or any login invalid → § Login immediately. Else continue
+the task.
 
-Exit 0 and every listed login valid → continue. Non-zero, no logins, or any
-login marked invalid / not logged in → §2.
+## Login — JUST DO IT
 
-## 2. Login — JUST DO IT
-
-If check failed, **run login yourself via Shell immediately**:
+**Run login yourself via Shell immediately**:
 
 ```bash
 tea logins add --oauth
@@ -35,5 +33,6 @@ default / when adding a second instance.
 - **Never** ask the user to run `tea logins add` / `tea login`.
 - **Never** ask permission to run it.
 - **Never** stop with "please log in".
-- Open the OAuth flow, wait until it finishes, re-run §1, then continue the
-  original task.
+- Open the OAuth flow, wait until it finishes, re-check with
+  `bash <this-skill>/scripts/check-auth.sh` (or `tea logins status`), then
+  continue the original task.
