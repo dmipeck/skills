@@ -15,6 +15,11 @@
       "command": "mcp-k8s-go",
       "args": []
     },
+    "azure": {
+      "type": "stdio",
+      "command": "azure-mcp",
+      "args": ["server", "start"]
+    },
     "grafana": {
       "type": "stdio",
       "command": "mcp-grafana",
