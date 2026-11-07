@@ -1,48 +1,13 @@
 ---
 name: bevy
 description: >-
-  Bevy development rules for scenes, components, resources, schedules,
-  and system communication. Applies when writing or reviewing Bevy
-  Rust, ECS code, .bsn files, or Bevy UI.
+  Bevy development rules. Applies when writing or reviewing Bevy code.
 ---
 
 # Bevy
 
 Apply these rules when writing or reviewing Bevy code. Ordinary Bevy API
-knowledge is assumed.
-
-**Design data** is hierarchy, which components an entity has, default field
-values, relationships, and asset paths. **Behavior** is systems, queries, and
-simulation. Call the file rule design data. Do not call it data-oriented.
-
-## Design data lives in `.bsn`
-
-Put design data in a `.bsn` file whenever the app can load one. `bsn!` is for
-a value a file cannot express. While no loader exists, `bsn!` may hold design
-data, and a follow-up change moves it into a `.bsn` file. Do not add a `.bsn`
-file nothing loads.
-
-A refactor that touches design data stored in Rust moves that data into
-`.bsn`. Behavior stays in Rust.
-
-If a `.bsn` loader is already registered, leave it alone. If none is, add
-`jackdaw_runtime` and point the user at the Jackdaw editor to author the
-scene. Do not launch the editor. Register `JackdawPlugin` after
-`DefaultPlugins` (tuple order below is that order) and spawn a
-`JackdawSceneRoot`:
-
-```rust
-App::new()
-    .add_plugins((DefaultPlugins, jackdaw_runtime::JackdawPlugin))
-    .add_systems(Startup, setup)
-    .run();
-
-fn setup(mut commands: Commands, assets: Res<AssetServer>) {
-    commands.spawn(JackdawSceneRoot(assets.load("scene.bsn")));
-}
-```
-
-Use the `jackdaw_runtime` release that matches the app's Bevy version.
+knowledge is assumed. Scene files are `bevy-jackdaw`.
 
 ## Components
 
@@ -66,8 +31,8 @@ A marker component (`Player`, `Enemy`) selects entities. It carries no data.
 A new variant of behavior is a marker plus its own system, not a `kind` enum
 or `bool` with a branch inside one system.
 
-When a component is meaningless without another, require it. Scene and `.bsn`
-values override those defaults. Do not require pieces for a later feature.
+When a component is meaningless without another, require it. Values supplied
+at spawn override those defaults. Do not require pieces for a later feature.
 
 ```rust
 #[derive(Component)]
@@ -84,10 +49,10 @@ Keep it thin. Point it at components when that is the natural home of the
 data. A resource may hold its own value. `Screen(Entity)` is not mandatory.
 
 When a resource overreaches, break it up. Extract any element that can live
-on an entity, in a component, or in a `.bsn` file. Inventory selection is the
-local player's component. The screen resource keeps the dimensions. A new
-resource needs its reason in the commit or PR message. That message is the
-refactor plan. Do not put the plan in a code comment.
+on an entity or in a component. Inventory selection is the local player's
+component. The screen resource keeps the dimensions. A new resource needs its
+reason in the commit or PR message. That message is the refactor plan. Do not
+put the plan in a code comment.
 
 ```rust
 #[derive(Resource)]
@@ -103,9 +68,9 @@ struct SelectedSlot(usize);
 ## Systems
 
 A system has one job and takes only the data that job uses. Structural
-changes in a normal system go through `Commands`. A rare despawn uses
-`Commands`. An exclusive `&mut World` system is for bulk structural work
-(map load, save) or for running another schedule.
+changes in a normal system, including a rare despawn, go through `Commands`.
+An exclusive `&mut World` system is for bulk structural work (map load, save)
+or for running another schedule.
 
 Physics, AI, gameplay movement, and gameplay spawn or despawn run in
 `FixedUpdate`. Camera, animation, UI, and VFX run in `Update`. Sample
