@@ -2,8 +2,8 @@
 name: bevy
 description: >-
   Bevy development rules for scenes, components, resources, schedules,
-  and system communication. Use when writing or reviewing Bevy Rust,
-  ECS code, .bsn files, or Bevy UI.
+  and system communication. Applies when writing or reviewing Bevy
+  Rust, ECS code, .bsn files, or Bevy UI.
 ---
 
 # Bevy
@@ -13,7 +13,7 @@ knowledge is assumed.
 
 **Design data** is hierarchy, which components an entity has, default field
 values, relationships, and asset paths. **Behavior** is systems, queries, and
-simulation.
+simulation. Call the file rule design data. Do not call it data-oriented.
 
 ## Design data lives in `.bsn`
 
@@ -27,8 +27,9 @@ A refactor that touches design data stored in Rust moves that data into
 
 If a `.bsn` loader is already registered, leave it alone. If none is, add
 `jackdaw_runtime` and point the user at the Jackdaw editor to author the
-scene. Do not launch the editor. Add `JackdawPlugin` after `DefaultPlugins`
-and spawn a `JackdawSceneRoot`:
+scene. Do not launch the editor. Register `JackdawPlugin` after
+`DefaultPlugins` (tuple order below is that order) and spawn a
+`JackdawSceneRoot`:
 
 ```rust
 App::new()
@@ -45,8 +46,9 @@ Use the `jackdaw_runtime` release that matches the app's Bevy version.
 
 ## Components
 
-Split a component when systems access its fields independently. Keep fields
-together when every reader uses them together (`Transform`).
+This is the cheat book rule. Split a component when systems access its fields
+independently. Keep fields together when every reader uses them together
+(`Transform`).
 
 ```rust
 #[derive(Component)]
@@ -85,7 +87,7 @@ When a resource overreaches, break it up. Extract any element that can live
 on an entity, in a component, or in a `.bsn` file. Inventory selection is the
 local player's component. The screen resource keeps the dimensions. A new
 resource needs its reason in the commit or PR message. That message is the
-refactor plan.
+refactor plan. Do not put the plan in a code comment.
 
 ```rust
 #[derive(Resource)]
@@ -101,9 +103,9 @@ struct SelectedSlot(usize);
 ## Systems
 
 A system has one job and takes only the data that job uses. Structural
-changes in a normal system go through `Commands`. An exclusive `&mut World`
-system is for bulk structural work (map load, save) or for running another
-schedule.
+changes in a normal system go through `Commands`. A rare despawn uses
+`Commands`. An exclusive `&mut World` system is for bulk structural work
+(map load, save) or for running another schedule.
 
 Physics, AI, gameplay movement, and gameplay spawn or despawn run in
 `FixedUpdate`. Camera, animation, UI, and VFX run in `Update`. Sample
@@ -114,7 +116,8 @@ simulation input in `PreUpdate` and store it for `FixedUpdate` to read.
 App flow (menu, loading, pause, mode) is `States` with `in_state`, `OnEnter`,
 and `OnExit`. Configure a system set on both `Update` and `FixedUpdate` when
 both schedules need it. Per-entity mode is a marker component. `States` does
-not hold game data.
+not hold game data. Do not start a system with `if app_mode == ...` on a
+resource.
 
 ## Change detection
 
@@ -125,8 +128,9 @@ system reacts, compare first.
 
 ## Messages and observers
 
-Sequence-sensitive work (gameplay, simulation) communicates with `Message`.
-Systems read messages at their place in the schedule.
+Sequence-sensitive work (gameplay, simulation) communicates with `Message`
+(`MessageWriter` / `MessageReader`). Systems read messages at their place in
+the schedule.
 
 ```rust
 #[derive(Message)]
@@ -138,6 +142,15 @@ struct Damage {
 fn hit(mut damage: MessageWriter<Damage>, hurt: Query<Entity, With<Hurt>>) {
     for target in &hurt {
         damage.write(Damage { target, amount: 1 });
+    }
+}
+
+fn apply(mut damage: MessageReader<Damage>, mut health: Query<&mut Health>) {
+    for Damage { target, amount } in damage.read() {
+        let Ok(mut hp) = health.get_mut(target) else {
+            continue;
+        };
+        hp.0 = hp.0.saturating_sub(*amount);
     }
 }
 ```
