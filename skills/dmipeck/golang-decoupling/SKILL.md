@@ -1,6 +1,8 @@
 ---
 name: golang-decoupling
-description: Per-domain packages, one model per domain, adapted at boundaries.
+description: >-
+  Per-domain packages, one model per domain, adapted at boundaries. Use
+  uuid.Nil for empty UUIDs (never uuid.UUID{}).
 ---
 
 # Domain Packages + Adapters
@@ -34,6 +36,9 @@ or JSON payload.
 6. **DTO-only JSON.** Marshal/unmarshal only on DTOs; domain entities
     never get `json:"..."` tags. Handler pipeline: parse request → DTO →
     domain package → service → DTO → response.
+7. **Empty UUIDs are `uuid.Nil`.** Creating or returning an empty
+    `uuid.UUID` (`github.com/google/uuid`) → `uuid.Nil`. Never
+    `uuid.UUID{}`, parsed zero strings, or other empty-UUID workarounds.
 
 Layout: `cmd/<name>/` (`package main`, thin CLI — `golang-cli`),
 `internal/todo/`, `internal/users/` (model + service),
