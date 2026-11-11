@@ -26,9 +26,11 @@ repos:
         entry: statix check
         language: system
         pass_filenames: false
+      # --fail required: stock deadnix reports unused code but exits 0, so
+      # without it the hook never gates.
       - id: deadnix
         name: deadnix (unused nix)
-        entry: deadnix
+        entry: deadnix --fail
         language: system
         files: \.nix$
       - id: skills-check
