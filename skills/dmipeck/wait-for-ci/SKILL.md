@@ -12,6 +12,9 @@ status), fail-fast on the first hard failure, and print a short report.
 
 ## Scripts
 
+Paths are relative to this skill's root: the directory containing this
+`SKILL.md`. Join each path to that directory, then run it.
+
 | Host | Script | CLI |
 |---|---|---|
 | GitHub | `scripts/wait_github.py` | `gh` |
@@ -19,9 +22,9 @@ status), fail-fast on the first hard failure, and print a short report.
 | Gitea | `scripts/wait_gitea.py` | `tea` |
 
 ```bash
-python <this-skill>/scripts/wait_github.py pr:42
-python <this-skill>/scripts/wait_gitlab.py mr:7 --timeout 1800
-python <this-skill>/scripts/wait_gitea.py branch:main --fail-on-allowed
+python scripts/wait_github.py pr:42
+python scripts/wait_gitlab.py mr:7 --timeout 1800
+python scripts/wait_gitea.py branch:main --fail-on-allowed
 ```
 
 Pass one or more `KIND:VALUE` targets (required; never infer from the
