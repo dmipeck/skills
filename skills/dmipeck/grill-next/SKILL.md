@@ -1,7 +1,6 @@
 ---
 name: grill-next
-description: >-
-  Grill the next quick-win issue. Use when the user invokes /grill-next.
+description: Grill the next quick-win issue.
 disable-model-invocation: true
 ---
 
