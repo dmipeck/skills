@@ -1,10 +1,6 @@
 ---
 name: grill-next
-description: >-
-  Claim the quickest ungrilled issue, grill it with the maintainer, write
-  the Spec into that issue, and open the feature pull request only when
-  the grill changes a glossary or an ADR. Use when the user invokes
-  /grill-next.
+description: Use when the user invokes /grill-next.
 disable-model-invocation: true
 ---
 
