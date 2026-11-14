@@ -26,4 +26,5 @@ npx skills add <owner/repo> -g -a cursor --copy
 ```
 
 Commit as `skills/<owner>/<skill-id>/` (e.g. `skills/mattpocock/grilling/SKILL.md`).
-First-party skills live at `skills/dmipeck/<id>/`.
+First-party skills live at `skills/dmipeck/<id>/`. Go skills live at
+`skills/dmipeck/golang/<id>/`; the skill `name` keeps the `golang-` prefix.
