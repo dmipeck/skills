@@ -15,7 +15,7 @@ owns the query side; see `golang-database` (layout) and `postgres` (schema).
 2. `sql_package: pgx/v5`. `schema` points at `./internal/migrate/sql`;
    migration files double as sqlc's schema.
 3. **Avoid `pgtype.*`.** Overrides map Postgres types to native Go:
-   `float64`, `time.Time`, `github.com/google/uuid.UUID`. `pgtype` opt-in
+   `float64`, `time.Time`, UUID per `golang-uuid`. `pgtype` opt-in
    for weird types (e.g. `numeric`).
 4. Regenerate via `internal/tools/generate.go` (see `golang-layout`):
    `//go:generate go tool sqlc generate`, run `go generate ./...`. sqlc
@@ -26,9 +26,9 @@ owns the query side; see `golang-database` (layout) and `postgres` (schema).
 
 - `emit_interface: true`, `emit_empty_slices: true`.
 - `emit_pointers_for_null_types: true` (optional) → nullable columns as
-  `*time.Time`/`*uuid.UUID` instead of `pgtype.*`.
-- Columns with defaults (`uuidv7()`, `now()`) generate non-null
-  `uuid.UUID`/`time.Time`; inserts use `RETURNING`.
+  pointers (`*time.Time`; UUID per `golang-uuid`) instead of `pgtype.*`.
+- Columns with defaults (`now()`; UUID defaults per `golang-uuid`) generate
+  non-null natives; inserts use `RETURNING`.
 - `bigint`→`int64`, `float8`→`float64` are defaults, kept explicit.
 - `numeric` has no lossless native type — leave `pgtype.Numeric` or map to
   string; never money through `float64`.
@@ -38,8 +38,8 @@ owns the query side; see `golang-database` (layout) and `postgres` (schema).
 - One file per aggregate. Annotate every query
   `-- name: X :one|:many|:exec|:execrows`. `$1, $2` positional params.
 - Soft delete: every `SELECT` filters `deleted_at IS NULL`; "delete" is
-  `UPDATE`, not `DELETE FROM` (schema side in `postgres`). uuid columns
-  come back `uuid.UUID`, timestamps `time.Time`.
+  `UPDATE`, not `DELETE FROM` (schema side in `postgres`). UUID columns
+  per `golang-uuid`; timestamps `time.Time`.
 
 ## Regenerate + verify
 

@@ -17,8 +17,9 @@ description: OpenAPI-driven Go API codegen.
     `var _ oas.Handler = (*Handler)(nil)`.
 4. ogen generates server + client from same spec (`paths/server` +
     `paths/client`). Client reused for integration tests.
-5. Generated types map OpenAPI formats to Go natives: `uuid` → `uuid.UUID`,
-    `date-time` → `time.Time`, plus `Opt*`/`Nil*` for optional/nullable.
+5. Generated types map OpenAPI formats to Go natives: UUID per
+    `golang-uuid`, `date-time` → `time.Time`, plus `Opt*`/`Nil*` for
+    optional/nullable.
 6. Handlers return generated response sum type (`*PetRes`, `*UserRes`), not
     domain types. Map at boundary. Optional `oas.NewOptX(...)`, required plain
     assignment, nullable `oas.NilX`/`oas.NewNilX`.

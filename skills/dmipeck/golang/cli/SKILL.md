@@ -12,7 +12,7 @@ config to native values and call a domain function — a thin wrapper.
 
 1. cobra/viper only under `cmd/<name>/` as **`package main`** (same
    package as `main.go`). Native values (`time.Duration`, `url.URL`,
-   `uuid.UUID`, `config.Config`) cross the boundary; viper/cobra types
+   `uuid.UUID` (`golang-uuid`), `config.Config`) cross the boundary; viper/cobra types
    never leave `cmd/<name>/`. See `golang-layout`.
 2. Env vars are the source of truth. No secrets, URLs, or ports in config
    files checked into git.
