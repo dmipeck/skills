@@ -10,6 +10,7 @@ Own and evolve portable agent tooling as files in this tree:
 | Path | Role |
 | --- | --- |
 | `skills/dmipeck/<id>/SKILL.md` | First-party Cursor-pure skills (folder name = skill id) |
+| `skills/dmipeck/golang/<id>/SKILL.md` | Go skills; `name` keeps the `golang-` prefix |
 | `skills/<owner>/<id>/SKILL.md` | Third-party skills, namespaced by owner |
 | `agents/<id>.md` | Flat subagents / agents |
 | `rules/*.mdc` | Always-on and scoped Cursor rules |
