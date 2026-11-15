@@ -110,6 +110,8 @@ Replace the issue body. Keep the title. Do not add a comment.
 2. The Spec, using the template in `to-spec`. Do not publish a second issue.
 3. `## Original report`, then the previous body verbatim.
 
-In that same edit: add `ready-for-agent`, remove `needs-triage` when it is present, add `bug` or `enhancement` when the issue has no category label, and release the claim.
+In that same edit: add `ready-for-agent` and `spec`, remove `needs-triage` when it is present, add `bug` or `enhancement` when the issue has no category label, and release the claim. Create the `spec` label when the tracker does not have it.
+
+A child issue of this spec is a ticket. Label each one `ticket`, and do not put `spec` on it. Create the `ticket` label when the tracker does not have it.
 
 Report the issue URL and, when a pull request exists, its URL.
