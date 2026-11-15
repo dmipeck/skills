@@ -14,18 +14,19 @@ Read `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md`. If eithe
 
 ## Terms
 
-**Quick win**: the unclaimed `ready-for-agent` issue with the narrowest user-visible change that one session can implement. The lowest issue number wins a tie.
+**Quick win**: the unclaimed issue labelled `spec` and `ready-for-agent` with the narrowest user-visible change that one session can implement. The lowest issue number wins a tie. An issue labelled `ticket` and not `spec` is not a quick win.
 
 ## 1. Pick
 
 List open issues and keep the pool:
 
 - An issue, not a pull request.
-- Labelled `ready-for-agent`.
+- Labelled `spec` and `ready-for-agent`.
 - No assignee.
+- Not labelled `ticket`.
 - Drop any `wayfinder:*` label, and any issue that carries a second state label.
 
-Read each survivor. Pick the quick win, and record one sentence on why it won.
+A lone ticket stays out of the pool. Read each survivor. Pick the quick win, and record one sentence on why it won.
 
 If nothing remains, or every survivor is bigger than one session, list number, title, and why it is out. Claim nothing. Stop.
 
@@ -33,9 +34,11 @@ Same session, already holding the claim on one pool issue: that issue is the qui
 
 ## 2. Claim
 
-Claim it before any other write. Re-read the issue. If the assignee is not the current user, skip it and pick the next quick win.
+Claim the spec before any other write. Re-read it. If the assignee is not the current user, skip it and pick the next quick win.
 
-Abandoning the run before the implementation is on the pull request releases the claim.
+Then claim every open child ticket of that spec. Children are the tracker's sub-issues. Where sub-issues are unavailable, children are open issues whose body starts with `Part of #<spec>`. Leave a child already assigned to someone else, and report it. Do not claim a ticket that is not a child of this spec.
+
+Abandoning the run before the implementation is on the pull request releases the spec and every ticket this run claimed.
 
 ## 3. Implement
 
