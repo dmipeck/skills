@@ -22,6 +22,7 @@ class Verdict(Enum):
     FAILED = "failed"
     SUPERSEDED = "superseded"
     TIMED_OUT = "timed_out"
+    NEEDS_REBASE = "needs_rebase"
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,20 @@ class Run:
 
 
 @dataclass(frozen=True)
+class Rebase:
+    kind: str
+    number: str
+    base: str
+    url: str
+
+
+@dataclass(frozen=True)
+class RebaseStatus:
+    required: Rebase | None = None
+    pending: bool = False
+
+
+@dataclass(frozen=True)
 class Decision:
     verdict: Verdict
     reason: str
@@ -63,6 +78,7 @@ class Decision:
     run: Run | None = None
     pending: tuple[Job, ...] = ()
     runs: tuple[Run, ...] = ()
+    rebase: Rebase | None = None
 
 
 def parse_targets(raw: Sequence[str], kinds: Set[str]) -> tuple[Target, ...]:
@@ -135,8 +151,27 @@ def allowed_job_names(workflow: str) -> frozenset[str]:
     return frozenset(_jobs_after(lines[start + 1 :]))
 
 
-def decide(runs: tuple[Run, ...], *, fail_on_allowed: bool) -> Decision:
-    """Halt on hard failure or superseded; otherwise wait or judge aggregates."""
+def combine_rebase(parts: Sequence[tuple[str, Rebase]]) -> RebaseStatus:
+    """First required PR wins. Any still-unknown PR blocks a later OK."""
+    pending = False
+    for kind, item in parts:
+        if kind == "required":
+            return RebaseStatus(required=item)
+        if kind == "pending":
+            pending = True
+    return RebaseStatus(pending=pending)
+
+
+def decide(
+    runs: tuple[Run, ...],
+    *,
+    fail_on_allowed: bool,
+    rebase: RebaseStatus | None = None,
+) -> Decision:
+    """Halt on a required rebase, hard failure, or superseded; else wait or judge aggregates."""
+    status = rebase or RebaseStatus()
+    if status.required is not None:
+        return Decision(Verdict.NEEDS_REBASE, "rebase", rebase=status.required, runs=runs)
     if not runs:
         return Decision(Verdict.WAIT, "pending", runs=runs)
 
@@ -167,6 +202,8 @@ def decide(runs: tuple[Run, ...], *, fail_on_allowed: bool) -> Decision:
     other = next((run for run in runs if run.status != "success"), None)
     if other is not None:
         return Decision(Verdict.FAILED, "aggregate", run=other, runs=runs)
+    if status.pending:
+        return Decision(Verdict.WAIT, "rebase", runs=runs)
     return Decision(Verdict.OK, "ok", runs=runs)
 
 
@@ -179,6 +216,7 @@ def watch(
     monotonic: Callable[[], float],
     interval_s: float = 15,
     max_interval_s: float = 60,
+    rebase: Callable[[], RebaseStatus] | None = None,
 ) -> Decision:
     """Poll ``fetch`` until a terminal verdict or timeout. Backoff doubles to max."""
     start = monotonic()
@@ -186,7 +224,8 @@ def watch(
     seen: tuple[Run, ...] = ()
     while True:
         seen = fetch()
-        decision = decide(seen, fail_on_allowed=fail_on_allowed)
+        status = rebase() if rebase is not None else RebaseStatus()
+        decision = decide(seen, fail_on_allowed=fail_on_allowed, rebase=status)
         if decision.verdict is not Verdict.WAIT:
             return decision
         if timeout_s is not None and monotonic() - start >= timeout_s:
@@ -217,6 +256,9 @@ def format_report(decision: Decision) -> str:
     if decision.verdict is Verdict.SUPERSEDED and decision.run is not None:
         run = decision.run
         return f"Superseded\nrun: {run.id}\nurl: {run.url}\n"
+    if decision.verdict is Verdict.NEEDS_REBASE and decision.rebase is not None:
+        reb = decision.rebase
+        return f"Needs rebase\n{reb.kind}: {reb.number}\nbase: {reb.base}\nurl: {reb.url}\n"
     if decision.verdict is Verdict.TIMED_OUT:
         return _format_timeout(decision)
     raise ValueError(f"cannot format {decision.verdict}")
@@ -229,6 +271,7 @@ def exit_code(verdict: Verdict) -> int:
         Verdict.FAILED: 1,
         Verdict.SUPERSEDED: 2,
         Verdict.TIMED_OUT: 3,
+        Verdict.NEEDS_REBASE: 4,
     }[verdict]
 
 

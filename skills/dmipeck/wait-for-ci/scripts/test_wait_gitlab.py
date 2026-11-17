@@ -8,6 +8,8 @@ from collections.abc import Sequence
 from decide import Job, Remote, Target, Verdict, decide
 from wait_gitlab import (
     Resolved,
+    detailed_merge_rebase,
+    fetch_rebase,
     fetch_runs,
     map_job,
     map_pipeline,
@@ -454,6 +456,58 @@ class FetchRunsTests(unittest.TestCase):
         )
         self.assertEqual(runs[0].status, "success")
         self.assertEqual(decide(runs, fail_on_allowed=False).verdict, Verdict.OK)
+
+
+class RebaseTests(unittest.TestCase):
+    def test_detailed_merge_classification(self) -> None:
+        self.assertEqual(detailed_merge_rebase("need_rebase"), "required")
+        self.assertEqual(detailed_merge_rebase(None), "clear")
+        for status in ("checking", "unchecked", "ci_still_running", "preparing", "approvals_syncing"):
+            with self.subTest(status=status):
+                self.assertEqual(detailed_merge_rebase(status), "pending")
+        for status in ("mergeable", "ci_must_pass", "conflict", "not_approved", "draft_status"):
+            with self.subTest(status=status):
+                self.assertEqual(detailed_merge_rebase(status), "clear")
+
+    def test_fetch_rebase_need_rebase(self) -> None:
+        runner = _runner(
+            {
+                (
+                    "glab",
+                    "mr",
+                    "view",
+                    "7",
+                    "-R",
+                    "group/project",
+                    "-F",
+                    "json",
+                ): {
+                    "iid": 7,
+                    "target_branch": "main",
+                    "web_url": "https://gitlab.example/mr/7",
+                    "detailed_merge_status": "need_rebase",
+                }
+            }
+        )
+        status = fetch_rebase(
+            (Resolved("mr", "7", sha="abc", pipeline_id=None, ref="feature"),),
+            remote=REMOTE,
+            runner=runner,
+        )
+        assert status.required is not None
+        self.assertEqual(status.required.kind, "mr")
+        self.assertEqual(status.required.number, "7")
+        self.assertEqual(status.required.base, "main")
+        self.assertEqual(status.required.url, "https://gitlab.example/mr/7")
+
+    def test_fetch_rebase_ignores_sha_targets(self) -> None:
+        status = fetch_rebase(
+            (Resolved("sha", "abc", sha="abc", pipeline_id=None, ref=None),),
+            remote=REMOTE,
+            runner=_runner({}),
+        )
+        self.assertIsNone(status.required)
+        self.assertFalse(status.pending)
 
 
 if __name__ == "__main__":

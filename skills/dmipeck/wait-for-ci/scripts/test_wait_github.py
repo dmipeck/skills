@@ -11,10 +11,12 @@ from wait_github import (
     KINDS,
     Plan,
     ShaWatch,
+    fetch_rebase,
     fetch_runs,
     github_job,
     github_run,
     github_run_status,
+    merge_state_rebase,
     resolve_plan,
     select_runs,
     sha_from_commit,
@@ -277,6 +279,55 @@ jobs:
         self.assertTrue(soft.allowed_failure)
         self.assertEqual(soft.conclusion, "failure")
         self.assertFalse(lint.allowed_failure)
+
+
+class RebaseTests(unittest.TestCase):
+    def test_merge_state_classification(self) -> None:
+        self.assertEqual(merge_state_rebase("BEHIND"), "required")
+        self.assertEqual(merge_state_rebase("behind"), "required")
+        self.assertEqual(merge_state_rebase("UNKNOWN"), "pending")
+        self.assertEqual(merge_state_rebase(""), "pending")
+        for status in ("CLEAN", "BLOCKED", "DIRTY", "DRAFT", "UNSTABLE", "HAS_HOOKS"):
+            with self.subTest(status=status):
+                self.assertEqual(merge_state_rebase(status), "clear")
+
+    def test_fetch_rebase_behind_pr(self) -> None:
+        def runner(args: Sequence[str]) -> str:
+            self.assertEqual(
+                args,
+                [
+                    "pr",
+                    "view",
+                    "12",
+                    "-R",
+                    "o/r",
+                    "--json",
+                    "mergeStateStatus,baseRefName,url,number",
+                ],
+            )
+            return json.dumps(
+                {
+                    "mergeStateStatus": "BEHIND",
+                    "baseRefName": "main",
+                    "url": "https://github.com/o/r/pull/12",
+                    "number": 12,
+                }
+            )
+
+        status = fetch_rebase(Plan("o/r", (ShaWatch("aaa", pr="12"),), ()), runner=runner)
+        assert status.required is not None
+        self.assertEqual(status.required.kind, "pr")
+        self.assertEqual(status.required.number, "12")
+        self.assertEqual(status.required.base, "main")
+        self.assertEqual(status.required.url, "https://github.com/o/r/pull/12")
+
+    def test_fetch_rebase_skips_non_pr_targets(self) -> None:
+        def runner(_args: Sequence[str]) -> str:
+            raise AssertionError("no pr to poll")
+
+        status = fetch_rebase(Plan("o/r", (ShaWatch("aaa"),), ("9",)), runner=runner)
+        self.assertIsNone(status.required)
+        self.assertFalse(status.pending)
 
 
 if __name__ == "__main__":

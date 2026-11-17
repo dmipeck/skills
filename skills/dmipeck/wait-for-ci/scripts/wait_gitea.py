@@ -14,12 +14,15 @@ from urllib.parse import quote
 
 from decide import (
     Job,
+    Rebase,
+    RebaseStatus,
     Run,
     Target,
     TargetError,
     allowed_job_names,
     argument_parser,
     choose_remote,
+    combine_rebase,
     exit_code,
     format_report,
     parse_remotes,
@@ -173,6 +176,7 @@ def main(argv: Sequence[str] | None = None, *, runner: Runner | None = None) -> 
         timeout_s=args.timeout,
         sleep=time.sleep,
         monotonic=time.monotonic,
+        rebase=lambda: fetch_rebase(resolved[2], remote.slug, runner=active_runner),
     )
     sys.stdout.write(format_report(decision))
     return exit_code(decision.verdict)
@@ -183,10 +187,11 @@ def resolve_watch(
     slug: str,
     *,
     runner: Runner,
-) -> tuple[frozenset[str], frozenset[str]]:
-    """Resolve targets once to explicit run ids and commit SHAs."""
+) -> tuple[frozenset[str], frozenset[str], frozenset[str]]:
+    """Resolve targets once to explicit run ids, commit SHAs, and PR numbers."""
     run_ids: set[str] = set()
     shas: set[str] = set()
+    prs: set[str] = set()
     for target in targets:
         if target.kind == "run":
             run_ids.add(target.value)
@@ -200,6 +205,7 @@ def resolve_watch(
             if not sha:
                 raise TargetError(f"pull {target.value!r} missing head.sha")
             shas.add(sha)
+            prs.add(target.value)
             continue
         if target.kind == "branch":
             ref = tea_api(
@@ -220,17 +226,17 @@ def resolve_watch(
             shas.add(commit_sha_from_ref(ref, fetch_tag_object=fetch_tag))
             continue
         raise TargetError(f"unsupported target kind {target.kind!r}")
-    return frozenset(run_ids), frozenset(shas)
+    return frozenset(run_ids), frozenset(shas), frozenset(prs)
 
 
 def fetch_runs(
-    resolved: tuple[frozenset[str], frozenset[str]],
+    resolved: Sequence[frozenset[str]],
     slug: str,
     *,
     runner: Runner,
 ) -> tuple[Run, ...]:
     """Load and normalize the watched runs for one poll."""
-    run_ids, shas = resolved
+    run_ids, shas = resolved[0], resolved[1]
     by_id: dict[str, Mapping[str, Any]] = {}
     for run_id in run_ids:
         by_id[run_id] = tea_api(f"repos/{slug}/actions/runs/{run_id}", runner=runner)
@@ -273,6 +279,66 @@ def fetch_runs(
             )
         runs.append(map_run(raw, jobs, tip_sha=tip_cache[branch], newer_run=newer))
     return tuple(runs)
+
+
+def compare_behind(payload: Mapping[str, Any]) -> bool:
+    """True when a compare of head...base lists commits the head does not contain."""
+    return int(payload.get("total_commits") or 0) > 0
+
+
+def outdated_branch_blocks(protection: Mapping[str, Any] | None, *, behind: bool) -> str:
+    """Required only when branch protection refuses an outdated head."""
+    if not protection or not protection.get("block_on_outdated_branch"):
+        return "clear"
+    if behind:
+        return "required"
+    return "clear"
+
+
+def fetch_rebase(prs: frozenset[str], slug: str, *, runner: Runner) -> RebaseStatus:
+    """Poll each watched PR. Abort-worthy only when protection blocks an outdated branch."""
+    parts: list[tuple[str, Rebase]] = []
+    for number in sorted(prs):
+        pull = tea_api(f"repos/{slug}/pulls/{quote(number, safe='')}", runner=runner)
+        base_ref = _dig(pull, "base", "ref")
+        base_sha = _dig(pull, "base", "sha")
+        head_sha = _dig(pull, "head", "sha")
+        url = str(pull.get("html_url") or pull.get("url") or "")
+        item = Rebase("pr", str(pull.get("number") or number), base_ref, url)
+        if pull.get("merged"):
+            parts.append(("clear", item))
+            continue
+        protection = _protection(slug, base_ref, runner=runner)
+        behind = False
+        if (
+            protection
+            and protection.get("block_on_outdated_branch")
+            and base_sha
+            and head_sha
+            and base_sha != head_sha
+        ):
+            compare = tea_api(
+                f"repos/{slug}/compare/{quote(head_sha, safe='')}...{quote(base_sha, safe='')}",
+                runner=runner,
+            )
+            behind = compare_behind(compare)
+        parts.append((outdated_branch_blocks(protection, behind=behind), item))
+    return combine_rebase(parts)
+
+
+def _protection(slug: str, branch: str, *, runner: Runner) -> Mapping[str, Any] | None:
+    if not branch:
+        return None
+    path = f"repos/{slug}/branch_protections/{quote(branch, safe='')}"
+    try:
+        payload = tea_api(path, runner=runner)
+    except TargetError as exc:
+        if "404" in str(exc):
+            return None
+        raise
+    if not isinstance(payload, Mapping):
+        raise TargetError(f"tea api {path}: unexpected payload")
+    return payload
 
 
 def tea_api(path: str, *, runner: Runner) -> Any:
