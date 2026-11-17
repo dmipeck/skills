@@ -11,10 +11,13 @@ from decide import Job, Run, Target, Verdict, decide
 from wait_gitea import (
     branch_has_newer_run,
     commit_sha_from_ref,
+    compare_behind,
+    fetch_rebase,
     fetch_runs,
     map_job,
     map_run,
     normalize_conclusion,
+    outdated_branch_blocks,
     resolve_watch,
     run_aggregate,
     superseded_cancelled,
@@ -204,13 +207,14 @@ class ResolveAndFetchTests(unittest.TestCase):
             path = cmd[2]
             return subprocess.CompletedProcess(cmd, 0, json.dumps(responses[path]), "")
 
-        run_ids, shas = resolve_watch(
+        run_ids, shas, prs = resolve_watch(
             (Target("pr", "4"), Target("run", "99"), Target("sha", "direct")),
             "o/r",
             runner=runner,
         )
         self.assertEqual(run_ids, frozenset({"99"}))
         self.assertEqual(shas, frozenset({"prsha", "direct"}))
+        self.assertEqual(prs, frozenset({"4"}))
 
     def test_fetch_maps_allowed_failure_and_hard_fail(self) -> None:
         yaml = """
@@ -339,6 +343,69 @@ jobs:
         self.assertEqual(len(runs), 1)
         self.assertTrue(runs[0].superseded)
         self.assertEqual(decide(runs, fail_on_allowed=False).verdict, Verdict.SUPERSEDED)
+
+
+class RebaseTests(unittest.TestCase):
+    def test_compare_and_protection(self) -> None:
+        self.assertTrue(compare_behind({"total_commits": 2}))
+        self.assertFalse(compare_behind({"total_commits": 0}))
+        self.assertEqual(outdated_branch_blocks(None, behind=True), "clear")
+        self.assertEqual(
+            outdated_branch_blocks({"block_on_outdated_branch": False}, behind=True),
+            "clear",
+        )
+        self.assertEqual(
+            outdated_branch_blocks({"block_on_outdated_branch": True}, behind=False),
+            "clear",
+        )
+        self.assertEqual(
+            outdated_branch_blocks({"block_on_outdated_branch": True}, behind=True),
+            "required",
+        )
+
+    def test_fetch_rebase_when_protection_blocks_outdated_head(self) -> None:
+        responses = {
+            "repos/o/r/pulls/4": {
+                "number": 4,
+                "html_url": "https://gitea.test/pull/4",
+                "merged": False,
+                "base": {"ref": "main", "sha": "base"},
+                "head": {"sha": "head"},
+            },
+            "repos/o/r/branch_protections/main": {"block_on_outdated_branch": True},
+            "repos/o/r/compare/head...base": {"total_commits": 1},
+        }
+
+        def runner(cmd: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+            path = cmd[2]
+            return subprocess.CompletedProcess(cmd, 0, json.dumps(responses[path]), "")
+
+        status = fetch_rebase(frozenset({"4"}), "o/r", runner=runner)
+        assert status.required is not None
+        self.assertEqual(status.required.number, "4")
+        self.assertEqual(status.required.base, "main")
+        self.assertEqual(status.required.url, "https://gitea.test/pull/4")
+
+    def test_fetch_rebase_without_protection_is_clear(self) -> None:
+        responses = {
+            "repos/o/r/pulls/4": {
+                "number": 4,
+                "html_url": "https://gitea.test/pull/4",
+                "merged": False,
+                "base": {"ref": "main", "sha": "base"},
+                "head": {"sha": "head"},
+            },
+        }
+
+        def runner(cmd: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+            path = cmd[2]
+            if path not in responses:
+                return subprocess.CompletedProcess(cmd, 1, "", "404 Not Found")
+            return subprocess.CompletedProcess(cmd, 0, json.dumps(responses[path]), "")
+
+        status = fetch_rebase(frozenset({"4"}), "o/r", runner=runner)
+        self.assertIsNone(status.required)
+        self.assertFalse(status.pending)
 
 
 if __name__ == "__main__":

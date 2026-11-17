@@ -15,6 +15,8 @@ from typing import Any
 
 from decide import (
     Job,
+    Rebase,
+    RebaseStatus,
     Remote,
     Run,
     Target,
@@ -22,6 +24,7 @@ from decide import (
     allowed_job_names,
     argument_parser,
     choose_remote,
+    combine_rebase,
     exit_code,
     format_report,
     parse_remotes,
@@ -333,6 +336,48 @@ def _pr_sha_moved(
     return str(payload["headRefOid"]) != watched_sha
 
 
+def merge_state_rebase(status: str) -> str:
+    """Classify GitHub ``mergeStateStatus``. ``BEHIND`` must be updated before merge."""
+    status = status.upper()
+    if status == "BEHIND":
+        return "required"
+    if status in {"", "UNKNOWN"}:
+        return "pending"
+    return "clear"
+
+
+def fetch_rebase(
+    plan: Plan,
+    *,
+    runner: Callable[[Sequence[str]], str] | None = None,
+) -> RebaseStatus:
+    """Poll each watched PR for a required update onto its base."""
+    parts: list[tuple[str, Rebase]] = []
+    seen: set[str] = set()
+    for watch_sha in plan.shas:
+        if watch_sha.pr is None or watch_sha.pr in seen:
+            continue
+        seen.add(watch_sha.pr)
+        payload = _gh_json(
+            [
+                "pr",
+                "view",
+                watch_sha.pr,
+                "-R",
+                plan.repo,
+                "--json",
+                "mergeStateStatus,baseRefName,url,number",
+            ],
+            runner=runner,
+        )
+        kind = merge_state_rebase(str(payload.get("mergeStateStatus") or ""))
+        number = str(payload.get("number") or watch_sha.pr)
+        base = str(payload.get("baseRefName") or "")
+        url = str(payload.get("url") or "")
+        parts.append((kind, Rebase("pr", number, base, url)))
+    return combine_rebase(parts)
+
+
 def fetch_runs(
     plan: Plan,
     *,
@@ -409,6 +454,7 @@ def main(
             timeout_s=args.timeout,
             sleep=time.sleep,
             monotonic=time.monotonic,
+            rebase=lambda: fetch_rebase(plan, runner=runner),
         )
     except TargetError as exc:
         print(f"wait_github.py: error: {exc}", file=sys.stderr)

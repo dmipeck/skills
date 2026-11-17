@@ -6,6 +6,8 @@ import unittest
 from decide import (
     Decision,
     Job,
+    Rebase,
+    RebaseStatus,
     Remote,
     Run,
     Target,
@@ -14,6 +16,7 @@ from decide import (
     allowed_job_names,
     argument_parser,
     choose_remote,
+    combine_rebase,
     decide,
     exit_code,
     format_report,
@@ -162,6 +165,96 @@ class DecideAggregateTests(unittest.TestCase):
                 )
                 self.assertEqual(decision.verdict, Verdict.FAILED)
                 self.assertIn(decision.reason, {"aggregate", "blocked"})
+
+
+class RebaseTests(unittest.TestCase):
+    def test_required_rebase_aborts_while_jobs_pending(self) -> None:
+        reb = Rebase("pr", "42", "main", "https://example.test/pull/42")
+        pending = job("test", done=False, conclusion=None)
+        decision = decide(
+            (run(jobs=(pending,), status="pending"),),
+            fail_on_allowed=False,
+            rebase=RebaseStatus(required=reb),
+        )
+        self.assertEqual(decision.verdict, Verdict.NEEDS_REBASE)
+        self.assertEqual(decision.rebase, reb)
+
+    def test_required_rebase_aborts_over_a_red_job(self) -> None:
+        reb = Rebase("mr", "7", "main", "https://example.test/mr/7")
+        decision = decide(
+            (run(jobs=(job("lint", conclusion="failure"),), status="failure"),),
+            fail_on_allowed=False,
+            rebase=RebaseStatus(required=reb),
+        )
+        self.assertEqual(decision.verdict, Verdict.NEEDS_REBASE)
+
+    def test_unknown_rebase_blocks_ok(self) -> None:
+        decision = decide(
+            (run(jobs=(job("test"),), status="success"),),
+            fail_on_allowed=False,
+            rebase=RebaseStatus(pending=True),
+        )
+        self.assertEqual(decision.verdict, Verdict.WAIT)
+        self.assertEqual(decision.reason, "rebase")
+
+    def test_unknown_rebase_still_reports_a_hard_failure(self) -> None:
+        decision = decide(
+            (run(jobs=(job("lint", conclusion="failure"),), status="failure"),),
+            fail_on_allowed=False,
+            rebase=RebaseStatus(pending=True),
+        )
+        self.assertEqual(decision.verdict, Verdict.FAILED)
+
+    def test_needs_rebase_report_and_exit(self) -> None:
+        reb = Rebase("pr", "42", "main", "https://example.test/pull/42")
+        decision = Decision(Verdict.NEEDS_REBASE, "rebase", rebase=reb)
+        self.assertEqual(
+            format_report(decision),
+            "Needs rebase\npr: 42\nbase: main\nurl: https://example.test/pull/42\n",
+        )
+        self.assertEqual(exit_code(Verdict.NEEDS_REBASE), 4)
+
+    def test_combine_rebase_required_beats_pending(self) -> None:
+        first = Rebase("pr", "1", "main", "https://example.test/1")
+        second = Rebase("pr", "2", "main", "https://example.test/2")
+        status = combine_rebase((("pending", first), ("required", second)))
+        self.assertEqual(status.required, second)
+        self.assertFalse(status.pending)
+
+    def test_watch_aborts_on_required_rebase_without_sleeping(self) -> None:
+        sleeps: list[float] = []
+        reb = Rebase("pr", "42", "main", "https://example.test/pull/42")
+        decision = watch(
+            lambda: (run(jobs=(job("test", done=False, conclusion=None),), status="pending"),),
+            fail_on_allowed=False,
+            timeout_s=None,
+            sleep=sleeps.append,
+            monotonic=lambda: 0.0,
+            rebase=lambda: RebaseStatus(required=reb),
+        )
+        self.assertEqual(decision.verdict, Verdict.NEEDS_REBASE)
+        self.assertEqual(sleeps, [])
+
+    def test_watch_waits_while_rebase_state_is_unknown(self) -> None:
+        sleeps: list[float] = []
+        polls = {"n": 0}
+
+        def rebase() -> RebaseStatus:
+            polls["n"] += 1
+            if polls["n"] < 2:
+                return RebaseStatus(pending=True)
+            return RebaseStatus()
+
+        decision = watch(
+            lambda: (run(jobs=(job("test"),), status="success"),),
+            fail_on_allowed=False,
+            timeout_s=None,
+            sleep=sleeps.append,
+            monotonic=lambda: 0.0,
+            rebase=rebase,
+        )
+        self.assertEqual(decision.verdict, Verdict.OK)
+        self.assertEqual(sleeps, [15.0])
 
 
 class FormatAndExitTests(unittest.TestCase):

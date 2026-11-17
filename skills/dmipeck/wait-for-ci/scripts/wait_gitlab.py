@@ -14,12 +14,15 @@ from typing import Any
 
 from decide import (
     Job,
+    Rebase,
+    RebaseStatus,
     Remote,
     Run,
     Target,
     TargetError,
     argument_parser,
     choose_remote,
+    combine_rebase,
     exit_code,
     format_report,
     parse_remotes,
@@ -31,6 +34,16 @@ KINDS = frozenset({"mr", "branch", "tag", "sha", "pipeline"})
 REJECT_HOSTS = frozenset({"github.com"})
 TERMINAL_JOB = frozenset({"success", "failed", "canceled", "cancelled", "skipped"})
 TIMEOUT_REASONS = frozenset({"timeout", "stuck_or_timeout_failure", "job_execution_timeout"})
+REBASE_PENDING = frozenset(
+    {
+        "",
+        "approvals_syncing",
+        "checking",
+        "ci_still_running",
+        "preparing",
+        "unchecked",
+    }
+)
 PENDING_PIPELINE = frozenset(
     {
         "created",
@@ -192,6 +205,44 @@ def resolve_targets(
     return tuple(resolved)
 
 
+def detailed_merge_rebase(status: str | None) -> str:
+    """Classify GitLab ``detailed_merge_status``. Missing field is not a required rebase."""
+    if status is None:
+        return "clear"
+    status = status.lower()
+    if status == "need_rebase":
+        return "required"
+    if status in REBASE_PENDING:
+        return "pending"
+    return "clear"
+
+
+def fetch_rebase(
+    resolved: Sequence[Resolved],
+    *,
+    remote: Remote,
+    runner: Runner,
+) -> RebaseStatus:
+    """Poll each watched MR for a required rebase onto its target branch."""
+    parts: list[tuple[str, Rebase]] = []
+    for item in resolved:
+        if item.kind != "mr":
+            continue
+        payload = _glab_json(
+            ("mr", "view", item.value, "-R", remote.slug, "-F", "json"),
+            runner=runner,
+        )
+        if not isinstance(payload, dict):
+            raise TargetError(f"mr:{item.value} returned no JSON object")
+        raw = payload["detailed_merge_status"] if "detailed_merge_status" in payload else None
+        kind = detailed_merge_rebase(None if raw is None else str(raw))
+        number = str(payload.get("iid") or item.value)
+        base = str(payload.get("target_branch") or "")
+        url = str(payload.get("web_url") or "")
+        parts.append((kind, Rebase("mr", number, base, url)))
+    return combine_rebase(parts)
+
+
 def fetch_runs(
     resolved: Sequence[Resolved],
     *,
@@ -268,6 +319,7 @@ def main(argv: Sequence[str] | None = None, *, runner: Runner | None = None) -> 
             timeout_s=args.timeout,
             sleep=time.sleep,
             monotonic=time.monotonic,
+            rebase=lambda: fetch_rebase(resolved, remote=remote, runner=active_runner),
         )
     except (OSError, subprocess.CalledProcessError, json.JSONDecodeError, TargetError) as exc:
         print(f"wait_gitlab.py: error: {exc}", file=sys.stderr)
