@@ -7,8 +7,10 @@ argument-hint: "[pr-number|url|branch]"
 
 # Babysit PR
 
-Keep an open PR/MR mergeable. Rebase onto latest default, clear
-conflicts and CI failures, then report. Do **not** merge unless asked.
+The goal is a **mergeable** PR/MR: CI green **and** the branch up to date
+with its target, so the forge will merge without a required rebase. Rebase
+onto latest default, clear conflicts and CI failures, then report. Do
+**not** merge unless asked.
 
 ## 1. Resolve target
 
@@ -38,32 +40,35 @@ do not guess.
 
 ## 3. Wait for CI — fix loop
 
-Follow the `wait-for-ci` skill on the pushed HEAD.
+Follow the `wait-for-ci` skill on the pushed HEAD. Mergeable means that
+wait returns **OK** and does not abort with **Needs rebase**.
 
 | Result | Action |
 | --- | --- |
-| **OK** | Proceed to report. |
+| **OK** | Proceed to the mergeability check. |
+| **Needs rebase** | The forge will not merge until the head contains the target tip. Return to **§2**, rebase, push, re-run `wait-for-ci`. Not a CI failure. |
 | **Failed** | Diagnose failing job(s); fix on the source branch; commit (`conventional-commits`); push; re-run `wait-for-ci`. |
 | **Superseded** | Re-resolve HEAD; wait again. |
 | **Blocked / timed out** | Report status; ask whether to keep waiting. |
 
-After each push that lands behind default again, return to **§2** before
+After each push that lands behind the target again, return to **§2** before
 another CI wait.
 
-Repeat until CI is green **and** the branch is rebased on current default,
-or the user stops you. Cap silent fix attempts at ~3 distinct failure
-modes; then summarize and ask before looping further.
+Repeat until CI is green **and** the PR/MR is up to date with the target
+branch, or the user stops you. Cap silent fix attempts at ~3 distinct
+failure modes; then summarize and ask before looping further.
 
 ## 4. Mergeability check
 
-Before finishing, confirm:
+A PR/MR is mergeable only when CI is green and the branch is up to date
+with the target. Before finishing, confirm:
 
-- [ ] Rebased on latest default (no behind-target commits)
+- [ ] Up to date with the latest target (`wait-for-ci` did not abort with **Needs rebase**)
 - [ ] No unresolved conflicts; worktree clean
 - [ ] Branch pushed; not ahead of upstream
-- [ ] CI green per `wait-for-ci`
-- [ ] PR/MR not draft (mark ready if it was draft and CI is green), unless
-      the user wanted it left draft
+- [ ] CI green per `wait-for-ci` (**OK**)
+- [ ] PR/MR not draft (mark ready if it was draft and the PR is mergeable),
+      unless the user wanted it left draft
 
 Do not enable auto-merge or click merge unless explicitly asked.
 
@@ -71,6 +76,6 @@ Do not enable auto-merge or click merge unless explicitly asked.
 
 Short final reply:
 
-- **Ready** — PR/MR URL, HEAD SHA, CI OK, rebased on `<default>`.
+- **Ready** — PR/MR URL, HEAD SHA, CI OK, up to date with `<target>` (mergeable).
 - **Blocked** — what failed (conflict, CI job + link, permissions) and what
   you tried; next human step if any.
