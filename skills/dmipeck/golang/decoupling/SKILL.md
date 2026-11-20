@@ -1,8 +1,7 @@
 ---
 name: golang-decoupling
 description: >-
-  Per-domain packages, one model per domain, adapted at boundaries. Use
-  uuid.Nil for empty UUIDs (never uuid.UUID{}).
+  Per-domain packages, one model per domain, adapted at boundaries.
 ---
 
 # Domain Packages + Adapters
@@ -24,8 +23,8 @@ or JSON payload.
     from spec in `internal/oas/`, thin adapter in `internal/api/` (see
     `golang-api`); never sqlc rows or domain entities in a response.
     Config — native-typed structs in `internal/config/` (`time.Duration`,
-    `url.URL`, `uuid.UUID`, bools), parsed in `cmd/<name>/`, never raw
-    strings or viper types.
+    `url.URL`, `uuid.UUID` (`golang-uuid`), bools), parsed in `cmd/<name>/`,
+    never raw strings or viper types.
 3. **Mappers live next to target model.** Adapter owns
     `fromDomain`/`toDomain`; domain never imports adapter.
 4. **Business rules in domain package, not handlers.** Logic shared by
@@ -36,9 +35,6 @@ or JSON payload.
 6. **DTO-only JSON.** Marshal/unmarshal only on DTOs; domain entities
     never get `json:"..."` tags. Handler pipeline: parse request → DTO →
     domain package → service → DTO → response.
-7. **Empty UUIDs are `uuid.Nil`.** Creating or returning an empty
-    `uuid.UUID` (`github.com/google/uuid`) → `uuid.Nil`. Never
-    `uuid.UUID{}`, parsed zero strings, or other empty-UUID workarounds.
 
 Layout: `cmd/<name>/` (`package main`, thin CLI — `golang-cli`),
 `internal/todo/`, `internal/users/` (model + service),

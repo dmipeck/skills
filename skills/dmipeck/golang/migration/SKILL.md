@@ -28,7 +28,7 @@ run programmatically — no migrate CLI in prod, no external SQL at runtime.
 6. Remove a shipped resource: rename to `_del_<name>`, ship; deploy app code
    that stops referencing old name; later migration `DROP`s the `_del_`
    resource after it has been unreferenced in production for a cycle.
-7. New tables follow `postgres` conventions (pk uuid, created_at/updated_at,
+7. New tables follow `postgres` conventions (pk (`golang-uuid`), created_at/updated_at,
    soft delete, ix_/ux_/fk_, timestamp).
 8. Down = exact inverse of up, in order. Test container is the one place a
    `down.sql` `DROP` runs — throwaway data.

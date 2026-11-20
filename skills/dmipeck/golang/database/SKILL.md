@@ -21,7 +21,7 @@ them together.
    for native types.
 5. golang-migrate manages schema (see `golang-migration`); follow its
    non-destructive migration rules.
-6. Schema follows `postgres` conventions: pk uuidv7, created_at/updated_at,
+6. Schema follows `postgres` conventions: pk (`golang-uuid`), created_at/updated_at,
    soft delete, ix_/ux_/fk_ prefixes, CHECK constraints.
 7. Repositories return the domain package's types; no sqlc/pgx types leak
    past the database package or into handlers (see `golang-decoupling`).
